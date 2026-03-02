@@ -680,6 +680,11 @@
                     <div style="display:flex; align-items:center; gap:8px; margin-bottom:24px;">
                         <div style="width:4px; height:20px; background:#E8913A; border-radius:2px;"></div>
                         <h3 style="font-size:16px; font-weight:700; color:var(--text-primary); margin:0;">채점 결과</h3>
+                        <button onclick="StageSelector._loadFromDB()" title="최신 결과 불러오기"
+                            style="margin-left:auto; background:none; border:1px solid var(--border-color); border-radius:6px; padding:4px 8px; cursor:pointer; font-size:13px; color:var(--text-secondary); display:flex; align-items:center; gap:4px;"
+                            onmouseover="this.style.background='var(--bg-color)'" onmouseout="this.style.background='none'">
+                            🔄
+                        </button>
                     </div>
 
                     <!-- 1차 결과 -->
