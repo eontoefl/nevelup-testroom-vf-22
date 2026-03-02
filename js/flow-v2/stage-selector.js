@@ -58,6 +58,11 @@ const StageSelector = {
             if (detailEl) detailEl.innerHTML = '';
         });
 
+        // ★ 라이팅: 대시보드 오른쪽 영역을 라이팅 전용 형태로 변경
+        if (sectionType === 'writing') {
+            this._resetWritingDashboard();
+        }
+
         // 완료 상태 비우기
         var status1st = document.getElementById('stage1stStatus');
         if (status1st) { status1st.textContent = '미완료'; status1st.classList.remove('stage-status-done'); }
@@ -65,6 +70,26 @@ const StageSelector = {
         if (status2nd) { status2nd.textContent = '미완료'; status2nd.classList.remove('stage-status-done'); }
         var noteStatus = document.getElementById('stageErrorNoteStatus');
         if (noteStatus) { noteStatus.textContent = '제출 후 확인 가능'; noteStatus.style.color = ''; }
+    },
+
+    /**
+     * 라이팅 대시보드 초기화 (점수+레벨 → 단어배열 점수+제출 상태 형태로 전환)
+     */
+    _resetWritingDashboard() {
+        ['1st', '2nd'].forEach(function(suffix) {
+            var scoreEl = document.getElementById('stageScore' + suffix);
+            if (scoreEl) {
+                scoreEl.innerHTML = '--<span style="font-size:14px; font-weight:400; color:var(--text-secondary);">/10</span>';
+            }
+            var levelEl = document.getElementById('stageLevel' + suffix);
+            if (levelEl) {
+                levelEl.textContent = '';  // 라이팅은 레벨 없음
+            }
+            var detailEl = document.getElementById('stageDetail' + suffix);
+            if (detailEl) {
+                detailEl.innerHTML = '<div style="font-size:11px; color:var(--text-secondary); text-align:center;">풀이 후 표시됩니다</div>';
+            }
+        });
     },
 
     async _loadFromDB() {
@@ -133,7 +158,31 @@ function startFirstAttemptV2() {
         return;
     }
     
-    // 2. ModuleController 생성
+    // ★ 라이팅은 전용 플로우 사용
+    if (sectionType === 'writing' && window.WritingFlowV2) {
+        WritingFlowV2.startFirst(moduleNumber, moduleConfig, function(type, writingResult) {
+            console.log('✅ [V2] 라이팅 1차 완료:', writingResult);
+            
+            // WritingFlowV2 결과를 StageSelector에 보관
+            StageSelector.firstAttemptResult = { sectionType: 'writing', writingResult: writingResult };
+            
+            // Supabase 저장
+            if (window.StudySave) {
+                StudySave.saveFirstResult(StageSelector.firstAttemptResult);
+            }
+            
+            // 대시보드 복귀 + 라이팅 대시보드 업데이트
+            backToStageSelect();
+            updateWritingDashboard(writingResult, '1st');
+            
+            // 1차 완료 상태 갱신
+            var status1st = document.getElementById('stage1stStatus');
+            if (status1st) { status1st.textContent = '✅ 완료'; status1st.classList.add('stage-status-done'); }
+        });
+        return;
+    }
+    
+    // 2. ModuleController 생성 (리딩/리스닝)
     const controller = new ModuleController(moduleConfig);
     window.moduleController = controller;
     
@@ -210,11 +259,18 @@ function returnToStageSelect(result) {
  * 오른쪽 채점 대시보드 업데이트
  */
 function updateStageDashboard(result, attempt) {
+    var suffix = attempt === '1st' ? '1st' : '2nd';
+    
+    // ★ 라이팅 전용 대시보드 업데이트
+    if (StageSelector.sectionType === 'writing' || (result && result.sectionType === 'writing')) {
+        updateWritingDashboard(result, attempt);
+        return;
+    }
+    
     var totalCorrect = 0;
     var totalQuestions = 0;
     var level = 0;
     var componentScores = [];
-    var suffix = attempt === '1st' ? '1st' : '2nd';
     
     // 2차 데이터: 이미 계산된 점수가 들어있음
     if (attempt === '2nd' && result.secondAttempt) {
@@ -313,6 +369,81 @@ function updateStageDashboard(result, attempt) {
     console.log('📊 [V2] 대시보드 업데이트:', attempt, totalCorrect + '/' + totalQuestions, '레벨', level.toFixed(1));
 }
 
+/**
+ * ★ 라이팅 전용 대시보드 업데이트
+ * 단어배열 점수 + 이메일/토론 제출 상태 표시
+ */
+function updateWritingDashboard(result, attempt) {
+    var suffix = attempt === '1st' ? '1st' : '2nd';
+    var wr = result && result.writingResult ? result.writingResult : result;
+    
+    if (!wr) {
+        console.warn('⚠️ [V2] 라이팅 결과 데이터 없음');
+        return;
+    }
+    
+    // 단어 배열 점수
+    var arrangeCorrect = 0;
+    var arrangeTotal = 10;
+    
+    if (attempt === '1st') {
+        arrangeCorrect = wr.arrangeCorrect1st || 0;
+        arrangeTotal = wr.arrangeTotal || 10;
+    } else {
+        arrangeCorrect = wr.arrangeCorrect2nd || 0;
+        arrangeTotal = wr.arrangeTotal || 10;
+    }
+    
+    // 점수 표시 (단어배열 점수만 큰 숫자로)
+    var scoreEl = document.getElementById('stageScore' + suffix);
+    if (scoreEl) {
+        scoreEl.innerHTML = arrangeCorrect + '<span style="font-size:14px; font-weight:400; color:var(--text-secondary);">/' + arrangeTotal + '</span>';
+    }
+    
+    // 레벨 대신 "단어 배열" 라벨
+    var levelEl = document.getElementById('stageLevel' + suffix);
+    if (levelEl) {
+        levelEl.textContent = '단어 배열';
+        levelEl.style.color = 'var(--text-secondary)';
+    }
+    
+    // 제출 상태 (이메일, 토론)
+    var detailEl = document.getElementById('stageDetail' + suffix);
+    if (detailEl) {
+        var html = '';
+        
+        // 이메일 제출 상태
+        var emailKey = attempt === '1st' ? 'email1stSubmitted' : 'email2ndSubmitted';
+        var emailSubmitted = wr[emailKey] || false;
+        html += '<div style="display:flex; justify-content:space-between; font-size:12px; padding:3px 0;">';
+        html += '<span style="color:var(--text-secondary);"><i class="fas fa-envelope" style="width:14px;"></i> 이메일' + (attempt === '2nd' ? ' 2차' : '') + '</span>';
+        html += '<span style="font-weight:600; color:' + (emailSubmitted ? '#10b981' : 'var(--text-secondary)') + ';">' + (emailSubmitted ? '✅ 제출됨' : '미제출') + '</span>';
+        html += '</div>';
+        
+        // 토론 제출 상태
+        var discKey = attempt === '1st' ? 'discussion1stSubmitted' : 'discussion2ndSubmitted';
+        var discSubmitted = wr[discKey] || false;
+        html += '<div style="display:flex; justify-content:space-between; font-size:12px; padding:3px 0;">';
+        html += '<span style="color:var(--text-secondary);"><i class="fas fa-comments" style="width:14px;"></i> 토론' + (attempt === '2nd' ? ' 2차' : '') + '</span>';
+        html += '<span style="font-weight:600; color:' + (discSubmitted ? '#10b981' : 'var(--text-secondary)') + ';">' + (discSubmitted ? '✅ 제출됨' : '미제출') + '</span>';
+        html += '</div>';
+        
+        // 2차일 때 1차→2차 점수 비교 추가
+        if (attempt === '2nd' && wr.arrangeCorrect1st !== undefined) {
+            var diff = arrangeCorrect - wr.arrangeCorrect1st;
+            html += '<div style="display:flex; justify-content:space-between; font-size:12px; padding:3px 0; margin-top:4px; border-top:1px solid var(--border-color); padding-top:6px;">';
+            html += '<span style="color:var(--text-secondary);">단어배열 변화</span>';
+            html += '<span style="font-weight:600; color:' + (diff > 0 ? '#10b981' : 'var(--text-primary)') + ';">';
+            html += wr.arrangeCorrect1st + ' → ' + arrangeCorrect + (diff > 0 ? ' (+' + diff + ')' : '');
+            html += '</span></div>';
+        }
+        
+        detailEl.innerHTML = html;
+    }
+    
+    console.log('📊 [V2] 라이팅 대시보드 업데이트:', attempt, arrangeCorrect + '/' + arrangeTotal);
+}
+
 function startSecondAttemptV2() {
     const sectionType = StageSelector.sectionType;
     const moduleNumber = StageSelector.moduleNumber;
@@ -327,7 +458,44 @@ function startSecondAttemptV2() {
         return;
     }
     
-    // RetakeController 존재 확인
+    // ★ 라이팅은 전용 플로우 사용
+    if (sectionType === 'writing' && window.WritingFlowV2) {
+        const moduleConfig = getModule(sectionType, moduleNumber);
+        if (!moduleConfig) {
+            alert('모듈을 찾을 수 없습니다.');
+            return;
+        }
+        
+        // ★ 2차 풀이 전에 1차 결과를 WritingFlowV2에 복원
+        // (페이지 새로고침 후 DB에서 불러온 경우 WritingFlowV2 내부 상태가 비어있을 수 있음)
+        if (firstResult && firstResult.writingResult) {
+            var wr = firstResult.writingResult;
+            WritingFlowV2.arrange1stResult = wr.arrange1st || null;
+            WritingFlowV2.email1stText = wr.email1stSubmitted ? '(제출됨)' : '';
+            WritingFlowV2.discussion1stText = wr.discussion1stSubmitted ? '(제출됨)' : '';
+        }
+        
+        WritingFlowV2.startSecond(moduleNumber, moduleConfig, function(type, writingResult) {
+            console.log('✅ [V2] 라이팅 2차 완료:', writingResult);
+            
+            StageSelector.secondAttemptResult = { sectionType: 'writing', writingResult: writingResult };
+            
+            if (window.StudySave) {
+                StudySave.saveSecondResult(StageSelector.secondAttemptResult);
+            }
+            
+            // 대시보드 복귀 + 라이팅 대시보드 업데이트
+            backToStageSelect();
+            updateWritingDashboard(writingResult, '2nd');
+            
+            // 2차 완료 상태 갱신
+            var status2nd = document.getElementById('stage2ndStatus');
+            if (status2nd) { status2nd.textContent = '✅ 완료'; status2nd.classList.add('stage-status-done'); }
+        });
+        return;
+    }
+    
+    // RetakeController 존재 확인 (리딩/리스닝)
     if (typeof RetakeController === 'undefined') {
         alert('2차 풀이 모듈을 불러올 수 없습니다.');
         console.error('❌ [V2] RetakeController not loaded');
@@ -487,6 +655,23 @@ function showExplainV2() {
         showReadingExplainV2();
     } else if (sectionType === 'listening' && typeof showListeningExplainV2 === 'function') {
         showListeningExplainV2();
+    } else if (sectionType === 'writing' && window.WritingFlowV2) {
+        // ★ 라이팅 해설: 1차 결과에서 arrange 데이터를 WritingFlowV2에 복원
+        var firstResult = StageSelector.firstAttemptResult;
+        if (firstResult && firstResult.writingResult) {
+            var wr = firstResult.writingResult;
+            WritingFlowV2.arrange1stResult = wr.arrange1st || null;
+            WritingFlowV2.arrange2ndResult = wr.arrange2nd || null;
+        }
+        var secondResult = StageSelector.secondAttemptResult;
+        if (secondResult && secondResult.writingResult) {
+            var wr2 = secondResult.writingResult;
+            WritingFlowV2.arrange2ndResult = wr2.arrange2nd || WritingFlowV2.arrange2ndResult;
+        }
+        var moduleConfig = getModule(sectionType, StageSelector.moduleNumber);
+        WritingFlowV2.startExplain(StageSelector.moduleNumber, moduleConfig, function() {
+            backToStageSelect();
+        });
     } else {
         alert('해설 보기 — 아직 구현 전입니다 (' + sectionType + ')');
     }
