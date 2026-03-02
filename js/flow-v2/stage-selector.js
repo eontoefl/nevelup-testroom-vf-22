@@ -156,14 +156,6 @@ const StageSelector = {
  * 화면 전환 + DB에서 최신 상태 다시 읽기
  */
 function backToStageSelect() {
-    // ★ 자원 정리: 스피킹 컴포넌트 오디오 정지 + 해제 (한 곳에서만 실행)
-    if (typeof cleanupSpeakingRepeat === 'function') {
-        cleanupSpeakingRepeat();
-    }
-    if (typeof cleanupSpeakingInterview === 'function') {
-        cleanupSpeakingInterview();
-    }
-    
     document.querySelectorAll('.screen').forEach(function(s) { s.style.display = 'none'; });
     document.querySelectorAll('.result-screen, .test-screen').forEach(function(s) { s.style.display = 'none'; });
     var screen = document.getElementById('stageSelectScreen');
@@ -887,10 +879,28 @@ async function _startSpeakingAttempt(attemptNum, moduleNumber, moduleConfig) {
     var controller = new ModuleController(moduleConfig);
     window.moduleController = controller;
     
-    controller.setOnComplete(function(result) {
+    controller.setOnComplete(async function(result) {
         console.log('✅ [V2] 스피킹 ' + attemptNum + '차 답변 완료:', result);
         
         var speakingResult = { sectionType: 'speaking', componentResults: result.componentResults || [] };
+        
+        // ★ 자원 정리: 풀이 끝났을 때 딱 한 번만 실행 (오디오 정지 + 컴포넌트 해제)
+        if (typeof cleanupSpeakingRepeat === 'function') cleanupSpeakingRepeat();
+        if (typeof cleanupSpeakingInterview === 'function') cleanupSpeakingInterview();
+        
+        // ★ 완료 안내 팝업
+        if (typeof showGuidePopup === 'function') {
+            await showGuidePopup({
+                icon: '✅',
+                title: attemptNum + '차 답변이 완료되었습니다',
+                desc: attemptNum === 1
+                    ? '2차 답변도 진행해주세요.'
+                    : '오답노트까지 제출하면 <b>100% 인증</b>됩니다.',
+                notice: '',
+                btn: '과제 화면으로',
+                theme: 'theme-green'
+            });
+        }
         
         if (attemptNum === 1) {
             StageSelector.firstAttemptResult = speakingResult;
