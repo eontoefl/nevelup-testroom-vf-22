@@ -253,6 +253,18 @@ function updateStageDashboard(result, attempt) {
             else if (totalCorrect <= 30) level = 5.0;
             else if (totalCorrect <= 32) level = 5.5;
             else level = 6.0;
+        } else if (sectionType === 'listening') {
+            if (totalCorrect <= 2) level = 1.0;
+            else if (totalCorrect <= 5) level = 1.5;
+            else if (totalCorrect <= 8) level = 2.0;
+            else if (totalCorrect <= 11) level = 2.5;
+            else if (totalCorrect <= 15) level = 3.0;
+            else if (totalCorrect <= 18) level = 3.5;
+            else if (totalCorrect <= 21) level = 4.0;
+            else if (totalCorrect <= 24) level = 4.5;
+            else if (totalCorrect <= 27) level = 5.0;
+            else if (totalCorrect <= 29) level = 5.5;
+            else level = 6.0;
         }
         
         // 파트별 점수
@@ -337,7 +349,8 @@ function startSecondAttemptV2() {
  * 2차 결과 화면에 "과제 화면으로 돌아가기" 버튼 추가
  */
 function addReturnButtonToRetakeResult(secondResults) {
-    const retakeScreen = document.getElementById('readingRetakeResultScreen');
+    var sectionType = StageSelector.sectionType || 'reading';
+    var retakeScreen = document.getElementById(sectionType + 'RetakeResultScreen');
     if (!retakeScreen) return;
     
     // 이미 추가된 버튼이 있으면 제거
@@ -405,6 +418,8 @@ function showExplainV2() {
 
     if (sectionType === 'reading' && typeof showReadingExplainV2 === 'function') {
         showReadingExplainV2();
+    } else if (sectionType === 'listening' && typeof showListeningExplainV2 === 'function') {
+        showListeningExplainV2();
     } else {
         alert('해설 보기 — 아직 구현 전입니다 (' + sectionType + ')');
     }

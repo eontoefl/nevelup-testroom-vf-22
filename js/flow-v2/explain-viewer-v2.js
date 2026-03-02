@@ -503,9 +503,172 @@ function setTextIfExists(id, text) {
     if (el) el.textContent = text;
 }
 
+// ========================================
+// 리스닝 해설 화면 (방법 B — 기존 렌더링 코드 활용)
+// ========================================
+
+/**
+ * 리스닝 해설보기 메인 함수 — showExplainV2()에서 호출됨
+ * StageSelector의 데이터를 기존 코드가 읽는 전역 변수에 세팅한 뒤,
+ * 기존 showListeningRetakeDetailPage()를 호출한다.
+ * → listening-retake-detail.js (2000줄)은 한 글자도 수정하지 않음.
+ */
+function showListeningExplainV2() {
+    console.log('📖 [V2] 리스닝 해설 화면 표시');
+
+    var firstResult = window.StageSelector && window.StageSelector.firstAttemptResult;
+    var secondResult = window.StageSelector && window.StageSelector.secondAttemptResult;
+
+    if (!firstResult) {
+        alert('1차 풀이를 먼저 완료해주세요.');
+        return;
+    }
+
+    // ① 기존 코드가 읽는 sessionStorage에 1차 결과 세팅
+    var firstAttemptCompat = {
+        sectionType: 'listening',
+        componentResults: firstResult.componentResults,
+        totalCorrect: firstResult.totalCorrect,
+        totalQuestions: firstResult.totalQuestions,
+        weekInfo: {
+            weekName: 'Week ' + (window.currentTest && window.currentTest.currentWeek || 1),
+            dayName: window.currentTest && window.currentTest.currentDay || '일'
+        }
+    };
+    sessionStorage.setItem('listening_firstAttempt', JSON.stringify(firstAttemptCompat));
+    console.log('  ✅ sessionStorage listening_firstAttempt 세팅 완료');
+
+    // ② 기존 코드가 읽는 window.currentListeningResultData 세팅
+    if (secondResult) {
+        window.currentListeningResultData = secondResult;
+        console.log('  ✅ window.currentListeningResultData 세팅 완료');
+    } else {
+        // 2차 결과 없으면 빈 구조체 (1차만으로도 해설 진입 가능하도록)
+        window.currentListeningResultData = {
+            firstAttempt: { results: [], score: 0 },
+            secondAttempt: { results: [], score: 0 },
+            secondAttemptAnswers: {},
+            improvement: {}
+        };
+        console.log('  ⚠️ 2차 결과 없음 — 빈 구조체 세팅');
+    }
+
+    // ③ 리스닝 해설 탭 화면 표시 (기존 showListeningRetakeDetailPage 대신 V2 탭 방식)
+    showListeningExplainTabScreen();
+}
+
+/**
+ * 리스닝 해설 탭 화면 — 응답 / 대화 / 공지 / 강의 탭
+ */
+function showListeningExplainTabScreen() {
+    // 모든 화면 숨기기
+    document.querySelectorAll('.screen, .result-screen, .test-screen').forEach(function(s) {
+        s.style.display = 'none';
+    });
+
+    // 첫 번째 탭(응답고르기)부터 표시
+    showListeningExplainPage(1);
+}
+
+/**
+ * 리스닝 해설 페이지 표시 (기존 렌더링 함수 호출 + V2 탭 네비게이션 추가)
+ */
+function showListeningExplainPage(pageIndex) {
+    console.log('📖 [V2] 리스닝 해설 페이지:', pageIndex);
+
+    // 기존 showListeningRetakeDetailPage 호출 — 렌더링은 기존 코드가 처리
+    if (typeof window.showListeningRetakeDetailPage === 'function') {
+        window.showListeningRetakeDetailPage(pageIndex);
+    } else {
+        console.error('❌ showListeningRetakeDetailPage 함수를 찾을 수 없습니다');
+        alert('리스닝 해설 화면을 불러올 수 없습니다.');
+        return;
+    }
+
+    // 기존 코드가 표시한 화면 위에 V2 탭 네비게이션 추가
+    setTimeout(function() {
+        addListeningExplainTabNav(pageIndex);
+    }, 400);
+}
+
+/**
+ * 리스닝 해설 화면에 V2 탭 네비게이션 추가
+ */
+function addListeningExplainTabNav(activePageIndex) {
+    var tabs = [
+        { page: 1, label: '응답고르기', icon: 'fas fa-headphones' },
+        { page: 2, label: '대화', icon: 'fas fa-comments' },
+        { page: 3, label: '공지사항', icon: 'fas fa-bullhorn' },
+        { page: 4, label: '강의', icon: 'fas fa-chalkboard-teacher' }
+    ];
+
+    // 현재 보이는 화면 찾기
+    var visibleScreen = null;
+    var possibleScreens = [
+        'finalExplainScreen',
+        'listeningRetakeDetailResponseScreen',
+        'listeningRetakeDetailConverScreen',
+        'listeningRetakeDetailAnnouncementScreen',
+        'listeningLectureResultScreen'
+    ];
+    for (var i = 0; i < possibleScreens.length; i++) {
+        var el = document.getElementById(possibleScreens[i]);
+        if (el && el.style.display !== 'none') {
+            visibleScreen = el;
+            break;
+        }
+    }
+    if (!visibleScreen) return;
+
+    // 기존 V2 탭 네비게이션 제거
+    var existingNav = visibleScreen.querySelector('.v2-listening-explain-tabs');
+    if (existingNav) existingNav.remove();
+
+    // 탭 네비게이션 생성
+    var navHTML = '<div class="v2-listening-explain-tabs" style="display:flex;gap:8px;padding:12px 16px;background:#f8f9fa;border-bottom:1px solid #e2e8f0;overflow-x:auto;position:sticky;top:0;z-index:100;">';
+    tabs.forEach(function(tab) {
+        var isActive = tab.page === activePageIndex;
+        navHTML += '<button class="v2-ltab-btn" data-page="' + tab.page + '" style="' +
+            'padding:8px 16px;border-radius:8px;border:1px solid ' + (isActive ? '#9480c5' : '#e2e8f0') + ';' +
+            'background:' + (isActive ? '#9480c5' : '#fff') + ';color:' + (isActive ? '#fff' : '#64748b') + ';' +
+            'font-size:13px;font-weight:' + (isActive ? '600' : '400') + ';cursor:pointer;white-space:nowrap;">' +
+            '<i class="' + tab.icon + '" style="margin-right:4px;"></i>' + tab.label + '</button>';
+    });
+
+    // 과제 화면으로 돌아가기 버튼
+    navHTML += '<button class="v2-ltab-return" style="' +
+        'padding:8px 16px;border-radius:8px;border:1px solid #e2e8f0;margin-left:auto;' +
+        'background:#fff;color:#9480c5;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">' +
+        '📋 과제 화면</button>';
+
+    navHTML += '</div>';
+
+    // 화면 맨 위에 삽입
+    visibleScreen.insertAdjacentHTML('afterbegin', navHTML);
+
+    // 탭 클릭 이벤트
+    visibleScreen.querySelectorAll('.v2-ltab-btn').forEach(function(btn) {
+        btn.onclick = function() {
+            showListeningExplainPage(parseInt(btn.getAttribute('data-page')));
+        };
+    });
+
+    // 과제 화면 복귀 버튼
+    var returnBtn = visibleScreen.querySelector('.v2-ltab-return');
+    if (returnBtn) {
+        returnBtn.onclick = function() {
+            document.querySelectorAll('.screen, .result-screen, .test-screen').forEach(function(s) { s.style.display = 'none'; });
+            var stageScreen = document.getElementById('stageSelectScreen');
+            if (stageScreen) stageScreen.style.display = 'block';
+        };
+    }
+}
+
 // 전역 노출
 window.showReadingExplainV2 = showReadingExplainV2;
+window.showListeningExplainV2 = showListeningExplainV2;
 window.showExplainTab = showExplainTab;
 
 console.log('✅ [V2] explain-viewer-v2.js 로드 완료');
 console.log('   - showReadingExplainV2() → 유형별 해설 탭 화면');
+console.log('   - showListeningExplainV2() → 리스닝 해설 탭 화면');
