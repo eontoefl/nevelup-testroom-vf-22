@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 2 화요일 버튼 테스트</title>
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .day-button {
+            display: inline-block;
+            padding: 15px 30px;
+            margin: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .day-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .day-button:active {
+            transform: translateY(0);
+        }
+        #log {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        .log-entry {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Week 2 화요일 버튼 테스트</h1>
+    
+    <div class="test-section">
+        <h2>Week 2</h2>
+        <button class="day-button" onclick="testClick('일')">일요일</button>
+        <button class="day-button" onclick="testClick('월')">월요일</button>
+        <button class="day-button" onclick="testClick('화')" id="tuesdayBtn">화요일 ⭐</button>
+        <button class="day-button" onclick="testClick('수')">수요일</button>
+        <button class="day-button" onclick="testClick('목')">목요일</button>
+        <button class="day-button" onclick="testClick('금')">금요일</button>
+    </div>
+
+    <div class="test-section">
+        <h3>📋 실제 데이터 구조 테스트</h3>
+        <button class="day-button" onclick="testRealData()">실제 demoTasks 데이터 확인</button>
+        <button class="day-button" onclick="testSelectDay()">selectDay('week2', '화') 실행</button>
+    </div>
+
+    <div id="log"></div>
+
+    <script src="js/data.js?v=20250209-pages"></script>
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function testClick(day) {
+            log(`✅ ${day}요일 버튼 클릭됨!`);
+            console.log(`${day}요일 버튼 클릭됨`);
+        }
+
+        function testRealData() {
+            log('=== 실제 데이터 구조 확인 ===');
+            
+            if (typeof demoTasks !== 'undefined') {
+                log('✅ demoTasks 존재함');
+                
+                const programs = Object.keys(demoTasks);
+                log(`프로그램 수: ${programs.length}`);
+                programs.forEach(p => log(`  - ${p}`));
+                
+                const standardData = demoTasks['내벨업챌린지 - Standard'];
+                if (standardData) {
+                    log('✅ Standard 프로그램 데이터 존재');
+                    
+                    if (standardData.week2) {
+                        log('✅ week2 데이터 존재');
+                        
+                        if (standardData.week2['화']) {
+                            const tuesdayData = standardData.week2['화'];
+                            log('✅ 화요일 데이터 존재!');
+                            log(`  sections: ${JSON.stringify(tuesdayData.sections)}`);
+                            log(`  pages: ${tuesdayData.pages}`);
+                            log(`  description: ${tuesdayData.description}`);
+                        } else {
+                            log('❌ 화요일 데이터 없음');
+                        }
+                    } else {
+                        log('❌ week2 데이터 없음');
+                    }
+                } else {
+                    log('❌ Standard 프로그램 데이터 없음');
+                }
+            } else {
+                log('❌ demoTasks 정의되지 않음');
+            }
+        }
+
+        function testSelectDay() {
+            log('=== selectDay 함수 테스트 ===');
+            
+            // 임시 currentTest 객체 생성
+            if (typeof currentTest === 'undefined') {
+                window.currentTest = {
+                    program: '내벨업챌린지 - Standard'
+                };
+                log('⚠️ currentTest 객체 생성 (임시)');
+            }
+            
+            // selectDay 함수 시뮬레이션
+            const week = 'week2';
+            const day = '화';
+            
+            log(`selectDay('${week}', '${day}') 호출`);
+            
+            if (typeof demoTasks !== 'undefined') {
+                const program = currentTest.program || '내벨업챌린지 - Standard';
+                const dayTask = demoTasks[program]?.[week]?.[day];
+                
+                if (dayTask) {
+                    log('✅ dayTask 찾음!');
+                    log(`  sections: ${JSON.stringify(dayTask.sections)}`);
+                    log(`  pages: ${dayTask.pages}`);
+                    log(`  description: ${dayTask.description}`);
+                    
+                    if (dayTask.sections && dayTask.sections.length === 1) {
+                        log('🎯 섹션이 1개입니다 - 자동 시작해야 함');
+                        const section = dayTask.sections[0];
+                        log(`  섹션 이름: ${section}`);
+                        
+                        if (section === 'vocab_test') {
+                            log('✅ vocab_test 섹션 확인됨!');
+                            log(`  전달할 페이지: ${dayTask.pages}`);
+                        }
+                    } else if (dayTask.sections) {
+                        log(`⚠️ 섹션이 ${dayTask.sections.length}개 - 선택 화면 표시해야 함`);
+                    }
+                } else {
+                    log('❌ dayTask를 찾을 수 없습니다');
+                    log(`  program: ${program}`);
+                    log(`  week: ${week}`);
+                    log(`  day: ${day}`);
+                }
+            }
+        }
+
+        // 페이지 로드 시 자동 테스트
+        window.addEventListener('load', () => {
+            log('🚀 테스트 페이지 로드 완료');
+            log('');
+            setTimeout(testRealData, 500);
+        });
+    </script>
+</body>
+</html>

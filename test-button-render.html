@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>버튼 렌더링 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #eee;
+        }
+        .result-box {
+            background: #16213e;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 2px solid #0f3460;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .code {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 renderSchedule 함수 테스트</h1>
+
+    <div class="result-box">
+        <h2>테스트 실행</h2>
+        <button onclick="runTest()">렌더링 테스트 실행</button>
+    </div>
+
+    <div class="result-box">
+        <h2>생성된 버튼 확인</h2>
+        <div id="scheduleContainer"></div>
+    </div>
+
+    <div class="result-box">
+        <h2>HTML 소스</h2>
+        <div class="code" id="htmlSource"></div>
+    </div>
+
+    <div class="result-box">
+        <h2>콘솔 로그</h2>
+        <div class="code" id="consoleLog"></div>
+    </div>
+
+    <script src="js/data.js?v=20250209-pages"></script>
+    <script>
+        const daysOfWeek = ['일', '월', '화', '수', '목', '금'];
+        let logMessages = [];
+
+        function customLog(msg) {
+            logMessages.push(`[${new Date().toLocaleTimeString()}] ${msg}`);
+            document.getElementById('consoleLog').textContent = logMessages.join('\n');
+            console.log(msg);
+        }
+
+        function renderSchedule(program) {
+            const container = document.getElementById('scheduleContainer');
+            if (!container) {
+                customLog('❌ scheduleContainer를 찾을 수 없습니다!');
+                return;
+            }
+            
+            container.innerHTML = '';
+            customLog(`✅ renderSchedule 시작: "${program}"`);
+            
+            const totalWeeks = program === '내벨업챌린지 - Standard' ? 8 : 4;
+            customLog(`총 주차 수: ${totalWeeks}`);
+            
+            // Week 2만 렌더링
+            const week = 2;
+            const weekBlock = document.createElement('div');
+            weekBlock.className = 'week-block';
+            weekBlock.style.marginBottom = '20px';
+            
+            const weekTitle = document.createElement('div');
+            weekTitle.style.fontSize = '20px';
+            weekTitle.style.fontWeight = 'bold';
+            weekTitle.style.marginBottom = '10px';
+            weekTitle.textContent = `Week ${week}`;
+            
+            const daysGrid = document.createElement('div');
+            daysGrid.style.display = 'grid';
+            daysGrid.style.gridTemplateColumns = 'repeat(6, 1fr)';
+            daysGrid.style.gap = '10px';
+            
+            // 요일별 버튼 생성
+            daysOfWeek.forEach(day => {
+                const dayButton = document.createElement('div');
+                dayButton.style.padding = '15px';
+                dayButton.style.background = day === '화' ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#3a3f5c';
+                dayButton.style.borderRadius = '10px';
+                dayButton.style.cursor = 'pointer';
+                dayButton.style.textAlign = 'center';
+                dayButton.style.transition = 'all 0.3s';
+                
+                customLog(`🔧 버튼 생성: Week ${week}, Day "${day}"`);
+                
+                dayButton.onclick = () => {
+                    customLog(`🖱️ 클릭됨: Week ${week}, Day "${day}"`);
+                    alert(`Week ${week} - ${day}요일 클릭!`);
+                };
+                
+                // 해당 날짜의 과제 정보 가져오기
+                const taskInfo = getTaskInfo(program, week, day);
+                
+                dayButton.innerHTML = `
+                    <div style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">${day}</div>
+                    <div style="font-size: 14px; color: #aaa;">${taskInfo}</div>
+                `;
+                
+                daysGrid.appendChild(dayButton);
+            });
+            
+            weekBlock.appendChild(weekTitle);
+            weekBlock.appendChild(daysGrid);
+            container.appendChild(weekBlock);
+            
+            customLog('✅ renderSchedule 완료');
+            
+            // HTML 소스 표시
+            document.getElementById('htmlSource').textContent = container.innerHTML;
+        }
+
+        function getTaskInfo(program, week, day) {
+            const weekKey = `week${week}`;
+            
+            customLog(`🔍 getTaskInfo: program="${program}", week=${week}, day="${day}"`);
+            
+            if (typeof demoTasks === 'undefined') {
+                customLog('❌ demoTasks가 정의되지 않음!');
+                return '과제 준비중';
+            }
+            
+            if (!demoTasks[program]) {
+                customLog(`❌ demoTasks["${program}"]가 없음`);
+                customLog(`사용 가능한 프로그램: ${Object.keys(demoTasks).join(', ')}`);
+                return '과제 준비중';
+            }
+            
+            if (!demoTasks[program][weekKey]) {
+                customLog(`❌ demoTasks["${program}"]["${weekKey}"]가 없음`);
+                return '과제 준비중';
+            }
+            
+            if (!demoTasks[program][weekKey][day]) {
+                customLog(`❌ demoTasks["${program}"]["${weekKey}"]["${day}"]가 없음`);
+                customLog(`사용 가능한 요일: ${Object.keys(demoTasks[program][weekKey]).join(', ')}`);
+                return '과제 준비중';
+            }
+            
+            const taskDesc = demoTasks[program][weekKey][day].description;
+            customLog(`✅ 과제 찾음: "${taskDesc}"`);
+            return taskDesc;
+        }
+
+        function runTest() {
+            logMessages = [];
+            customLog('🚀 테스트 시작');
+            customLog('');
+            
+            // demoTasks 확인
+            if (typeof demoTasks === 'undefined') {
+                customLog('❌ demoTasks가 로드되지 않았습니다!');
+                return;
+            }
+            customLog('✅ demoTasks 로드됨');
+            
+            const programs = Object.keys(demoTasks);
+            customLog(`프로그램 개수: ${programs.length}`);
+            programs.forEach(p => customLog(`  - "${p}"`));
+            customLog('');
+            
+            // Standard 프로그램으로 렌더링
+            renderSchedule('내벨업챌린지 - Standard');
+        }
+
+        // 페이지 로드 시 자동 실행
+        window.addEventListener('load', () => {
+            customLog('페이지 로드 완료');
+            setTimeout(runTest, 500);
+        });
+    </script>
+</body>
+</html>

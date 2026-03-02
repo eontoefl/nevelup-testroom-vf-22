@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>직접 Week 2 화요일 테스트</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css?v=104">
+    <style>
+        #testLog {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 400px;
+            background: rgba(0,0,0,0.9);
+            color: #0f0;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 10000;
+        }
+        .log-entry {
+            margin: 3px 0;
+            padding: 2px 0;
+            border-bottom: 1px solid #333;
+        }
+        .log-error { color: #ff6b6b; }
+        .log-success { color: #51cf66; }
+        .log-info { color: #74c0fc; }
+        #startTest {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10001;
+            padding: 20px 40px;
+            font-size: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        #startTest:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div id="testLog"></div>
+    <button id="startTest">🧪 Week 2 화요일 클릭 시뮬레이션</button>
+
+    <!-- 실제 index.html의 모든 스크립트 로드 -->
+    <script src="js/data.js?v=20250209-pages"></script>
+    <script src="js/auth.js?v=20250206-001"></script>
+    <script src="js/tasks.js?v=001"></script>
+    <script src="js/timer.js?v=001"></script>
+    <script src="js/navigation.js?v=002"></script>
+    <script src="js/vocab-test-logic.js?v=003"></script>
+    <script src="js/main.js?v=20250209-vocab-fix"></script>
+
+    <script>
+        function log(msg, type = 'info') {
+            const logDiv = document.getElementById('testLog');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(msg);
+        }
+
+        // 스크립트 로드 완료 확인
+        window.addEventListener('load', () => {
+            log('✅ 페이지 로드 완료', 'success');
+            
+            // 변수들 확인
+            setTimeout(() => {
+                log('=== 변수 존재 확인 ===');
+                log(`demoTasks: ${typeof demoTasks}`, typeof demoTasks !== 'undefined' ? 'success' : 'error');
+                log(`currentUser: ${typeof currentUser}`, typeof currentUser !== 'undefined' ? 'success' : 'error');
+                log(`currentTest: ${typeof currentTest}`, typeof currentTest !== 'undefined' ? 'success' : 'error');
+                log(`selectDay: ${typeof selectDay}`, typeof selectDay === 'function' ? 'success' : 'error');
+                log(`');
+                
+                if (typeof demoTasks !== 'undefined') {
+                    const programs = Object.keys(demoTasks);
+                    log(`프로그램 개수: ${programs.length}`, 'info');
+                    programs.forEach(p => log(`  - "${p}"`, 'info'));
+                }
+            }, 1000);
+        });
+
+        // 테스트 버튼 클릭
+        document.getElementById('startTest').addEventListener('click', () => {
+            log('');
+            log('🚀 ===  테스트 시작 ===', 'success');
+            
+            // 1. 임시 사용자 설정
+            if (typeof currentUser === 'undefined' || !currentUser) {
+                window.currentUser = {
+                    name: '홍길동',
+                    phone: '01012345678',
+                    program: '내벨업챌린지 - Standard'
+                };
+                log(`✅ currentUser 생성: ${currentUser.name} / ${currentUser.program}`, 'success');
+            } else {
+                log(`✅ currentUser 존재: ${currentUser.name} / ${currentUser.program}`, 'success');
+            }
+            
+            // 2. demoTasks 확인
+            if (typeof demoTasks === 'undefined') {
+                log('❌ demoTasks가 정의되지 않음!', 'error');
+                return;
+            }
+            log('✅ demoTasks 존재', 'success');
+            
+            // 3. Week 2 화요일 데이터 확인
+            const program = currentUser.program;
+            const weekKey = 'week2';
+            const day = '화';
+            
+            log(`📍 조회: demoTasks["${program}"]["${weekKey}"]["${day}"]`, 'info');
+            
+            if (!demoTasks[program]) {
+                log(`❌ 프로그램 "${program}" 없음`, 'error');
+                log('사용 가능한 프로그램:', 'info');
+                Object.keys(demoTasks).forEach(p => log(`  - "${p}"`, 'info'));
+                return;
+            }
+            log(`✅ 프로그램 존재`, 'success');
+            
+            if (!demoTasks[program][weekKey]) {
+                log(`❌ ${weekKey} 데이터 없음`, 'error');
+                return;
+            }
+            log(`✅ ${weekKey} 데이터 존재`, 'success');
+            
+            if (!demoTasks[program][weekKey][day]) {
+                log(`❌ ${day}요일 데이터 없음`, 'error');
+                log(`사용 가능한 요일: ${Object.keys(demoTasks[program][weekKey]).join(', ')}`, 'info');
+                return;
+            }
+            
+            const dayTask = demoTasks[program][weekKey][day];
+            log(`✅ 화요일 데이터 찾음!`, 'success');
+            log(`  sections: ${JSON.stringify(dayTask.sections)}`, 'info');
+            log(`  pages: "${dayTask.pages}"`, 'info');
+            log(`  description: "${dayTask.description}"`, 'info');
+            log('');
+            
+            // 4. selectDay 함수 호출
+            if (typeof selectDay !== 'function') {
+                log('❌ selectDay 함수가 정의되지 않음!', 'error');
+                return;
+            }
+            
+            log('🎯 selectDay(2, "화") 호출...', 'success');
+            try {
+                selectDay(2, '화');
+                log('✅ selectDay 호출 성공!', 'success');
+            } catch (error) {
+                log(`❌ selectDay 호출 실패: ${error.message}`, 'error');
+                console.error(error);
+            }
+        });
+    </script>
+</body>
+</html>

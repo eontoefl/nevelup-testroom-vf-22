@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>프로그램 이름 매칭 테스트</title>
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #eee;
+        }
+        .test-box {
+            background: #16213e;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 2px solid #0f3460;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .result {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin-top: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error { color: #ff6b6b; }
+        .success { color: #51cf66; }
+        .info { color: #74c0fc; }
+    </style>
+</head>
+<body>
+    <h1>🔍 프로그램 매칭 테스트</h1>
+
+    <div class="test-box">
+        <h2>1. 프로그램 이름 확인</h2>
+        <button onclick="test1()">프로그램 이름 리스트 확인</button>
+        <div id="result1" class="result"></div>
+    </div>
+
+    <div class="test-box">
+        <h2>2. Week 2 화요일 데이터 확인</h2>
+        <button onclick="test2()">Standard - Week 2 화요일</button>
+        <button onclick="test3()">Fast - Week 2 화요일</button>
+        <div id="result2" class="result"></div>
+    </div>
+
+    <div class="test-box">
+        <h2>3. 실제 selectDay 시뮬레이션</h2>
+        <button onclick="test4()">Standard 사용자로 Week 2 화요일 클릭</button>
+        <button onclick="test5()">Fast 사용자로 Week 2 화요일 클릭</button>
+        <div id="result3" class="result"></div>
+    </div>
+
+    <script src="js/data.js?v=20250209-pages"></script>
+    <script>
+        function log(id, msg, type = 'info') {
+            const result = document.getElementById(id);
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            result.innerHTML += `<div class="${className}">${msg}</div>`;
+        }
+
+        function test1() {
+            const result = document.getElementById('result1');
+            result.innerHTML = '';
+            
+            log('result1', '=== 프로그램 이름 확인 ===');
+            
+            if (typeof demoTasks === 'undefined') {
+                log('result1', '❌ demoTasks가 정의되지 않았습니다!', 'error');
+                return;
+            }
+            
+            log('result1', '✅ demoTasks 존재', 'success');
+            
+            const programs = Object.keys(demoTasks);
+            log('result1', `프로그램 개수: ${programs.length}`);
+            
+            programs.forEach((program, index) => {
+                log('result1', `  [${index + 1}] "${program}" (길이: ${program.length} 문자)`, 'info');
+                log('result1', `      16진수: ${Array.from(program).map(c => c.charCodeAt(0).toString(16).padStart(4, '0')).join(' ')}`, 'info');
+            });
+        }
+
+        function test2() {
+            const result = document.getElementById('result2');
+            result.innerHTML = '';
+            
+            log('result2', '=== Standard 프로그램 - Week 2 화요일 ===');
+            
+            const program = '내벨업챌린지 - Standard';
+            const weekKey = 'week2';
+            const day = '화';
+            
+            log('result2', `프로그램: "${program}"`);
+            log('result2', `Week Key: "${weekKey}"`);
+            log('result2', `요일: "${day}"`);
+            
+            if (!demoTasks[program]) {
+                log('result2', `❌ demoTasks["${program}"]가 존재하지 않습니다`, 'error');
+                log('result2', '사용 가능한 프로그램:', 'info');
+                Object.keys(demoTasks).forEach(p => {
+                    log('result2', `  - "${p}"`, 'info');
+                });
+                return;
+            }
+            
+            log('result2', `✅ demoTasks["${program}"] 존재`, 'success');
+            
+            if (!demoTasks[program][weekKey]) {
+                log('result2', `❌ week2 데이터 없음`, 'error');
+                return;
+            }
+            
+            log('result2', `✅ week2 데이터 존재`, 'success');
+            log('result2', `Week 2 요일 목록: ${Object.keys(demoTasks[program][weekKey]).join(', ')}`);
+            
+            if (!demoTasks[program][weekKey][day]) {
+                log('result2', `❌ 화요일 데이터 없음`, 'error');
+                return;
+            }
+            
+            const tuesdayData = demoTasks[program][weekKey][day];
+            log('result2', `✅ 화요일 데이터 존재!`, 'success');
+            log('result2', `  sections: ${JSON.stringify(tuesdayData.sections)}`);
+            log('result2', `  pages: ${tuesdayData.pages}`);
+            log('result2', `  description: ${tuesdayData.description}`);
+        }
+
+        function test3() {
+            const result = document.getElementById('result2');
+            result.innerHTML = '';
+            
+            log('result2', '=== Fast 프로그램 - Week 2 화요일 ===');
+            
+            const program = '내벨업챌린지 - Fast';
+            const weekKey = 'week2';
+            const day = '화';
+            
+            if (!demoTasks[program]) {
+                log('result2', `❌ Fast 프로그램 데이터 없음`, 'error');
+                return;
+            }
+            
+            if (!demoTasks[program][weekKey]) {
+                log('result2', `❌ week2 데이터 없음`, 'error');
+                return;
+            }
+            
+            if (!demoTasks[program][weekKey][day]) {
+                log('result2', `❌ 화요일 데이터 없음`, 'error');
+                return;
+            }
+            
+            const tuesdayData = demoTasks[program][weekKey][day];
+            log('result2', `✅ 화요일 데이터 존재!`, 'success');
+            log('result2', `  sections: ${JSON.stringify(tuesdayData.sections)}`);
+            log('result2', `  pages: ${tuesdayData.pages}`);
+            log('result2', `  description: ${tuesdayData.description}`);
+        }
+
+        function test4() {
+            const result = document.getElementById('result3');
+            result.innerHTML = '';
+            
+            log('result3', '=== selectDay 시뮬레이션 (Standard) ===');
+            
+            // 가상 사용자 생성
+            const currentUser = {
+                name: '홍길동',
+                phone: '01012345678',
+                program: '내벨업챌린지 - Standard'
+            };
+            
+            const week = 2;
+            const day = '화';
+            const weekKey = `week${week}`;
+            const program = currentUser.program;
+            
+            log('result3', `사용자: ${currentUser.name}`);
+            log('result3', `프로그램: "${program}"`);
+            log('result3', `주차: ${week} → weekKey: "${weekKey}"`);
+            log('result3', `요일: "${day}"`);
+            log('result3', '');
+            
+            log('result3', '📍 Step 1: demoTasks[program] 확인');
+            if (!demoTasks[program]) {
+                log('result3', `  ❌ 실패: demoTasks["${program}"] 없음`, 'error');
+                return;
+            }
+            log('result3', `  ✅ 성공`, 'success');
+            
+            log('result3', '📍 Step 2: demoTasks[program][weekKey] 확인');
+            if (!demoTasks[program][weekKey]) {
+                log('result3', `  ❌ 실패: demoTasks["${program}"]["${weekKey}"] 없음`, 'error');
+                return;
+            }
+            log('result3', `  ✅ 성공`, 'success');
+            
+            log('result3', '📍 Step 3: demoTasks[program][weekKey][day] 확인');
+            if (!demoTasks[program][weekKey][day]) {
+                log('result3', `  ❌ 실패: demoTasks["${program}"]["${weekKey}"]["${day}"] 없음`, 'error');
+                log('result3', `  사용 가능한 요일: ${Object.keys(demoTasks[program][weekKey]).join(', ')}`);
+                return;
+            }
+            
+            const dayTask = demoTasks[program][weekKey][day];
+            log('result3', `  ✅ 성공!`, 'success');
+            log('result3', '');
+            log('result3', '🎯 과제 데이터:');
+            log('result3', `  sections: ${JSON.stringify(dayTask.sections)}`);
+            log('result3', `  pages: "${dayTask.pages}"`);
+            log('result3', `  description: "${dayTask.description}"`);
+            log('result3', '');
+            
+            if (dayTask.sections.length === 1) {
+                log('result3', '✅ 섹션이 1개입니다 → startSection() 자동 호출해야 함', 'success');
+                log('result3', `   호출: startSection("${dayTask.sections[0]}")`, 'success');
+                
+                if (dayTask.sections[0] === 'vocab_test') {
+                    log('result3', `   페이지 전달: initVocabTest("${dayTask.pages}")`, 'success');
+                }
+            } else {
+                log('result3', `⚠️ 섹션이 ${dayTask.sections.length}개 → 선택 화면 표시해야 함`, 'info');
+            }
+        }
+
+        function test5() {
+            const result = document.getElementById('result3');
+            result.innerHTML = '';
+            
+            log('result3', '=== selectDay 시뮬레이션 (Fast) ===');
+            
+            const currentUser = {
+                name: '김철수',
+                phone: '01087654321',
+                program: '내벨업챌린지 - Fast'
+            };
+            
+            const week = 2;
+            const day = '화';
+            const weekKey = `week${week}`;
+            const program = currentUser.program;
+            
+            log('result3', `사용자: ${currentUser.name}`);
+            log('result3', `프로그램: "${program}"`);
+            
+            if (!demoTasks[program] || !demoTasks[program][weekKey] || !demoTasks[program][weekKey][day]) {
+                log('result3', '❌ 데이터 없음', 'error');
+                return;
+            }
+            
+            const dayTask = demoTasks[program][weekKey][day];
+            log('result3', '✅ 과제 데이터 찾음!', 'success');
+            log('result3', `  sections: ${JSON.stringify(dayTask.sections)}`);
+            log('result3', `  pages: "${dayTask.pages}"`);
+            log('result3', `  description: "${dayTask.description}"`);
+        }
+
+        // 페이지 로드 시 자동 테스트
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                test1();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

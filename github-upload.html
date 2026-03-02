@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub 파일 교체 도우미</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f6f8fa; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { text-align: center; color: #24292f; margin-bottom: 8px; font-size: 24px; }
+        .subtitle { text-align: center; color: #656d76; margin-bottom: 32px; font-size: 14px; }
+        
+        .file-card {
+            background: #fff;
+            border: 1px solid #d0d7de;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+        .file-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: #f6f8fa;
+            border-bottom: 1px solid #d0d7de;
+        }
+        .file-name {
+            font-weight: 600;
+            color: #24292f;
+            font-size: 15px;
+        }
+        .file-path {
+            font-size: 12px;
+            color: #656d76;
+            margin-top: 2px;
+        }
+        .file-size {
+            font-size: 13px;
+            color: #656d76;
+            background: #ddf4ff;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+        .file-actions {
+            padding: 16px 20px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid;
+            transition: all 0.2s;
+        }
+        .btn-download {
+            background: #2da44e;
+            color: white;
+            border-color: #2da44e;
+        }
+        .btn-download:hover { background: #218838; }
+        .btn-copy {
+            background: #0969da;
+            color: white;
+            border-color: #0969da;
+        }
+        .btn-copy:hover { background: #0550ae; }
+        .btn-github {
+            background: #24292f;
+            color: white;
+            border-color: #24292f;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-github:hover { background: #32383f; }
+        
+        .status { font-size: 13px; color: #656d76; margin-left: auto; }
+        .status.done { color: #2da44e; font-weight: 600; }
+        
+        .instructions {
+            background: #fff;
+            border: 1px solid #d0d7de;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .instructions h2 { font-size: 18px; color: #24292f; margin-bottom: 16px; }
+        .instructions ol { padding-left: 20px; }
+        .instructions li { margin-bottom: 10px; color: #24292f; line-height: 1.6; }
+        .instructions code { background: #f6f8fa; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+        
+        .warning {
+            background: #fff8c5;
+            border: 1px solid #d4a72c;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            color: #6f5300;
+        }
+        
+        .verify-section {
+            background: #fff;
+            border: 1px solid #d0d7de;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 24px;
+        }
+        .verify-section h2 { font-size: 18px; color: #24292f; margin-bottom: 12px; }
+        .verify-script {
+            background: #24292f;
+            color: #e6edf3;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 12px;
+            position: relative;
+        }
+        .copy-script-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #444;
+            color: #fff;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 GitHub 파일 교체 도우미</h1>
+        <p class="subtitle">아래 파일을 다운로드 받아서 GitHub에 업로드하세요</p>
+        
+        <div class="warning">
+            ⚠️ <b>중요:</b> 보카 시험 에러 수정! <b>task-router.js</b>와 <b>vocab-test-logic-v2.js</b>를 반드시 교체하세요.
+        </div>
+        
+        <div class="instructions">
+            <h2>📋 교체 방법</h2>
+            <ol>
+                <li>아래 2개 파일을 <b>"다운로드"</b> 클릭</li>
+                <li>GitHub 레포 → 해당 파일의 <b>경로로 이동</b></li>
+                <li>파일 클릭 → <b>✏️ 연필 아이콘</b> (Edit this file) 클릭</li>
+                <li><code>Ctrl+A</code> → <code>Delete</code> (전체 삭제)</li>
+                <li>다운로드 받은 파일을 <b>VS Code나 메모장으로 열기</b></li>
+                <li><code>Ctrl+A</code> → <code>Ctrl+C</code> (전체 복사)</li>
+                <li>GitHub 편집기에서 <code>Ctrl+V</code> (붙여넣기)</li>
+                <li><b>Commit changes</b> 클릭</li>
+            </ol>
+        </div>
+        
+        <!-- File 1: EmailComponent.js -->
+        <div class="file-card">
+            <div class="file-header">
+                <div>
+                    <div class="file-name">EmailComponent.js</div>
+                    <div class="file-path">js/components/EmailComponent.js</div>
+                </div>
+                <div class="file-size" id="size1">로딩중...</div>
+            </div>
+            <div class="file-actions">
+                <button class="btn btn-download" onclick="downloadFile('js/components/EmailComponent.js', 'EmailComponent.js', 1)">📥 다운로드</button>
+                <button class="btn btn-copy" onclick="copyToClipboard('js/components/EmailComponent.js', 1)">📋 클립보드 복사</button>
+                <span class="status" id="status1"></span>
+            </div>
+        </div>
+        
+        <!-- File 2: DiscussionComponent.js -->
+        <div class="file-card">
+            <div class="file-header">
+                <div>
+                    <div class="file-name">DiscussionComponent.js</div>
+                    <div class="file-path">js/components/DiscussionComponent.js</div>
+                </div>
+                <div class="file-size" id="size2">로딩중...</div>
+            </div>
+            <div class="file-actions">
+                <button class="btn btn-download" onclick="downloadFile('js/components/DiscussionComponent.js', 'DiscussionComponent.js', 2)">📥 다운로드</button>
+                <button class="btn btn-copy" onclick="copyToClipboard('js/components/DiscussionComponent.js', 2)">📋 클립보드 복사</button>
+                <span class="status" id="status2"></span>
+            </div>
+        </div>
+        
+        <!-- File 3: ArrangeComponent.js -->
+        <div class="file-card">
+            <div class="file-header">
+                <div>
+                    <div class="file-name">ArrangeComponent.js</div>
+                    <div class="file-path">js/components/ArrangeComponent.js</div>
+                </div>
+                <div class="file-size" id="size3">로딩중...</div>
+            </div>
+            <div class="file-actions">
+                <button class="btn btn-download" onclick="downloadFile('js/components/ArrangeComponent.js', 'ArrangeComponent.js', 3)">📥 다운로드</button>
+                <button class="btn btn-copy" onclick="copyToClipboard('js/components/ArrangeComponent.js', 3)">📋 클립보드 복사</button>
+                <span class="status" id="status3"></span>
+            </div>
+        </div>
+        
+        <!-- File 4: writing-flow.js -->
+        <div class="file-card">
+            <div class="file-header">
+                <div>
+                    <div class="file-name">writing-flow.js</div>
+                    <div class="file-path">js/writing-flow.js</div>
+                </div>
+                <div class="file-size" id="size4">로딩중...</div>
+            </div>
+            <div class="file-actions">
+                <button class="btn btn-download" onclick="downloadFile('js/writing-flow.js', 'writing-flow.js', 4)">📥 다운로드</button>
+                <button class="btn btn-copy" onclick="copyToClipboard('js/writing-flow.js', 4)">📋 클립보드 복사</button>
+                <span class="status" id="status4"></span>
+            </div>
+        </div>
+        
+        <!-- File 5: task-router.js (보카 에러 수정) -->
+        <div class="file-card" style="border-color: #d4a72c; border-width: 2px;">
+            <div class="file-header" style="background: #fff8c5;">
+                <div>
+                    <div class="file-name">⚡ task-router.js <span style="color:#d4a72c; font-size:12px;">(보카 에러 수정)</span></div>
+                    <div class="file-path">js/task-router.js</div>
+                </div>
+                <div class="file-size" id="size5">로딩중...</div>
+            </div>
+            <div class="file-actions">
+                <button class="btn btn-download" onclick="downloadFile('js/task-router.js', 'task-router.js', 5)">📥 다운로드</button>
+                <button class="btn btn-copy" onclick="copyToClipboard('js/task-router.js', 5)">📋 클립보드 복사</button>
+                <span class="status" id="status5"></span>
+            </div>
+        </div>
+        
+        <!-- File 6: vocab-test-logic-v2.js (보카 에러 수정) -->
+        <div class="file-card" style="border-color: #d4a72c; border-width: 2px;">
+            <div class="file-header" style="background: #fff8c5;">
+                <div>
+                    <div class="file-name">⚡ vocab-test-logic-v2.js <span style="color:#d4a72c; font-size:12px;">(보카 에러 수정)</span></div>
+                    <div class="file-path">js/vocab-test-logic-v2.js</div>
+                </div>
+                <div class="file-size" id="size6">로딩중...</div>
+            </div>
+            <div class="file-actions">
+                <button class="btn btn-download" onclick="downloadFile('js/vocab-test-logic-v2.js', 'vocab-test-logic-v2.js', 6)">📥 다운로드</button>
+                <button class="btn btn-copy" onclick="copyToClipboard('js/vocab-test-logic-v2.js', 6)">📋 클립보드 복사</button>
+                <span class="status" id="status6"></span>
+            </div>
+        </div>
+        
+        <!-- Verification Script -->
+        <div class="verify-section">
+            <h2>✅ 교체 후 검증 스크립트</h2>
+            <p style="color: #656d76; font-size: 14px; margin-bottom: 8px;">
+                4개 파일 모두 교체 후, Vercel 사이트 콘솔(F12)에서 아래 스크립트를 실행하세요:
+            </p>
+            <div class="verify-script" id="verifyScript">
+<button class="copy-script-btn" onclick="copyVerifyScript()">복사</button>
+// 최종 검증 스크립트
+(async function() {
+  const checks = [
+    ['js/components/EmailComponent.js', 'currentAttemptNumber'],
+    ['js/components/DiscussionComponent.js', 'currentAttemptNumber', 'document.body.appendChild'],
+    ['js/components/ArrangeComponent.js', 'isRetakeMode', 'prefillCorrectAnswers'],
+    ['js/writing-flow.js', 'runStep11_email', '_arrangeTimerInterval'],
+    ['js/task-router.js', '_launchVocabModule'],
+    ['js/vocab-test-logic-v2.js', 'str.includes']
+  ];
+  let pass = 0, fail = 0;
+  for (const [file, ...keywords] of checks) {
+    const resp = await fetch(file + '?_t=' + Date.now());
+    const text = await resp.text();
+    const allFound = keywords.every(k => text.includes(k));
+    console.log((allFound ? '✅' : '❌') + ' ' + file + ' (' + text.length + 'bytes)');
+    if (!allFound) {
+      keywords.forEach(k => { if (!text.includes(k)) console.log('   ❌ missing: ' + k); });
+      fail++;
+    } else { pass++; }
+  }
+  console.log('\\n' + '='.repeat(40));
+  console.log('결과: ✅ ' + pass + ' / ❌ ' + fail);
+  console.log(fail === 0 ? '🎉 모든 파일 최신!' : '⚠️ 위 파일 교체 필요');
+})();
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 파일 경로와 캐시된 내용
+        const fileCache = {};
+        
+        // 페이지 로드 시 파일 크기 표시
+        window.addEventListener('load', async () => {
+            const files = [
+                { path: 'js/components/EmailComponent.js', sizeEl: 'size1' },
+                { path: 'js/components/DiscussionComponent.js', sizeEl: 'size2' },
+                { path: 'js/components/ArrangeComponent.js', sizeEl: 'size3' },
+                { path: 'js/writing-flow.js', sizeEl: 'size4' },
+                { path: 'js/task-router.js', sizeEl: 'size5' },
+                { path: 'js/vocab-test-logic-v2.js', sizeEl: 'size6' }
+            ];
+            
+            for (const file of files) {
+                try {
+                    const resp = await fetch(file.path + '?_t=' + Date.now());
+                    const text = await resp.text();
+                    fileCache[file.path] = text;
+                    document.getElementById(file.sizeEl).textContent = (text.length).toLocaleString() + ' bytes';
+                } catch (e) {
+                    document.getElementById(file.sizeEl).textContent = '❌ 로드 실패';
+                }
+            }
+        });
+        
+        // 파일 다운로드
+        async function downloadFile(path, filename, num) {
+            try {
+                let content = fileCache[path];
+                if (!content) {
+                    const resp = await fetch(path + '?_t=' + Date.now());
+                    content = await resp.text();
+                    fileCache[path] = content;
+                }
+                
+                const blob = new Blob([content], { type: 'text/javascript;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                document.getElementById('status' + num).textContent = '✅ 다운로드 완료!';
+                document.getElementById('status' + num).className = 'status done';
+            } catch (e) {
+                document.getElementById('status' + num).textContent = '❌ 다운로드 실패';
+            }
+        }
+        
+        // 클립보드 복사
+        async function copyToClipboard(path, num) {
+            try {
+                let content = fileCache[path];
+                if (!content) {
+                    const resp = await fetch(path + '?_t=' + Date.now());
+                    content = await resp.text();
+                    fileCache[path] = content;
+                }
+                
+                await navigator.clipboard.writeText(content);
+                document.getElementById('status' + num).textContent = '✅ 복사 완료! GitHub에서 붙여넣기하세요';
+                document.getElementById('status' + num).className = 'status done';
+            } catch (e) {
+                // fallback: textarea 방식
+                const textarea = document.createElement('textarea');
+                textarea.value = content || '';
+                textarea.style.position = 'fixed';
+                textarea.style.left = '-9999px';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                document.getElementById('status' + num).textContent = '✅ 복사 완료! (fallback)';
+                document.getElementById('status' + num).className = 'status done';
+            }
+        }
+        
+        // 검증 스크립트 복사
+        function copyVerifyScript() {
+            const scriptEl = document.getElementById('verifyScript');
+            const text = scriptEl.textContent.replace('복사', '').trim();
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.copy-script-btn');
+                btn.textContent = '✅ 복사됨!';
+                setTimeout(() => { btn.textContent = '복사'; }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
