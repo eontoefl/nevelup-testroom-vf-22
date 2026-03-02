@@ -14,13 +14,14 @@
     <link rel="stylesheet" href="css/style.css?v=107_badge_fix">
     
     <link rel="stylesheet" href="css/result-screen.css?v=003_scoped">
+    <!-- [V2] 2차 풀이 Floating UI 스타일 (retake-popup.css) -->
     <link rel="stylesheet" href="css/retake-popup.css?v=003">
 <link rel="stylesheet" href="css/reading-daily1-result.css?v=daily2_fix_001">
 <link rel="stylesheet" href="css/reading-daily2-result.css?v=20260215_002">
 <link rel="stylesheet" href="css/reading-academic-result.css?v=academic_fix_001">
 <link rel="stylesheet" href="css/reading-retake-result.css?v=20260215_006">
 <link rel="stylesheet" href="css/reading-retake-detail.css?v=daily2_fix_001">
-<!-- [V2] final-explain-screen.css 제거 — explain-viewer-v2.js로 대체 -->
+<link rel="stylesheet" href="css/final-explain-screen.css?v=030_designer_clean">
 <link rel="stylesheet" href="css/listening-response-result.css?v=030_designer_clean">
 <link rel="stylesheet" href="css/listening-conver-result-v2.css?v=20260221_v2">
 <link rel="stylesheet" href="css/listening-announcement-result-v2.css?v=20260221_v2">
@@ -1144,12 +1145,7 @@
             </div>
         </div>
         
-        <!-- 페이지 네비게이션 -->
-        <div class="retake-navigation">
-            <button class="btn btn-primary btn-large" onclick="showListeningRetakeDetailPage(1)">
-                유형별 세부 결과 보기 →
-            </button>
-        </div>
+        <!-- [V2] 유형별 세부 결과 버튼 제거 — 해설은 과제 화면의 "해설 보기" 버튼으로 진입 -->
     </div>
 
     <!-- ============================= -->
@@ -3398,7 +3394,7 @@
     <script src="js/flow-v2/explain-viewer-v2.js?v=001"></script>
     <script src="js/listening-retake-result.js?v=20260215_004"></script>
     <script src="js/listening-retake-detail.js?v=20260223_syntax_fix"></script>
-<!-- [V2] final-explain-screen.js 제거 — explain-viewer-v2.js로 대체 -->
+<script src="js/final-explain-screen.js?v=001"></script>
 <script src="js/review-panel.js?v=001"></script>
 <!-- [V2] auth-monitor.js 제거 — FlowController 미사용으로 비활성 -->
 <!-- [V2] fraud-filter.js 제거 — FlowController 미사용으로 비활성 -->
