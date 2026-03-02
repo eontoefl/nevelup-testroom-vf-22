@@ -22,6 +22,8 @@ const StageSelector = {
         
         this.sectionType = sectionType;
         this.moduleNumber = moduleNumber;
+        this.firstAttemptResult = null;
+        this.secondAttemptResult = null;
 
         // 섹션 한글명 매핑
         const sectionLabel = {
