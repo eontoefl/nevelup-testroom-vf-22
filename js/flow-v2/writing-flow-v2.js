@@ -1025,7 +1025,12 @@ const WritingFlowV2 = {
             email1stSubmitted: !!this.email1stText,
             email2ndSubmitted: !!this.email2ndText,
             discussion1stSubmitted: !!this.discussion1stText,
-            discussion2ndSubmitted: !!this.discussion2ndText
+            discussion2ndSubmitted: !!this.discussion2ndText,
+            // ★ 실제 작성 텍스트 (DB 저장 + 열람용)
+            email1stText: this.email1stText || '',
+            email2ndText: this.email2ndText || '',
+            discussion1stText: this.discussion1stText || '',
+            discussion2ndText: this.discussion2ndText || ''
         };
     },
     

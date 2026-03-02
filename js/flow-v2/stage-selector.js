@@ -407,25 +407,41 @@ function updateWritingDashboard(result, attempt) {
         levelEl.style.color = 'var(--text-secondary)';
     }
     
-    // 제출 상태 (이메일, 토론)
+    // 제출 상태 (이메일, 토론) — 제출 시 '보기' 버튼으로 표시
     var detailEl = document.getElementById('stageDetail' + suffix);
     if (detailEl) {
         var html = '';
         
         // 이메일 제출 상태
         var emailKey = attempt === '1st' ? 'email1stSubmitted' : 'email2ndSubmitted';
+        var emailTextKey = attempt === '1st' ? 'email1stText' : 'email2ndText';
         var emailSubmitted = wr[emailKey] || false;
-        html += '<div style="display:flex; justify-content:space-between; font-size:12px; padding:3px 0;">';
-        html += '<span style="color:var(--text-secondary);"><i class="fas fa-envelope" style="width:14px;"></i> 이메일' + (attempt === '2nd' ? ' 2차' : '') + '</span>';
-        html += '<span style="font-weight:600; color:' + (emailSubmitted ? '#10b981' : 'var(--text-secondary)') + ';">' + (emailSubmitted ? '✅ 제출됨' : '미제출') + '</span>';
+        var emailLabel = '이메일' + (attempt === '2nd' ? ' 2차' : '');
+        html += '<div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:3px 0;">';
+        html += '<span style="color:var(--text-secondary);"><i class="fas fa-envelope" style="width:14px;"></i> ' + emailLabel + '</span>';
+        if (emailSubmitted && wr[emailTextKey]) {
+            html += '<span onclick="showWritingTextPopup(\'' + emailLabel + '\', \'' + attempt + '\', \'email\')" style="font-weight:600; color:#4A90D9; cursor:pointer; text-decoration:underline;">📄 보기</span>';
+        } else if (emailSubmitted) {
+            html += '<span style="font-weight:600; color:#10b981;">✅ 제출됨</span>';
+        } else {
+            html += '<span style="font-weight:600; color:var(--text-secondary);">미제출</span>';
+        }
         html += '</div>';
         
         // 토론 제출 상태
         var discKey = attempt === '1st' ? 'discussion1stSubmitted' : 'discussion2ndSubmitted';
+        var discTextKey = attempt === '1st' ? 'discussion1stText' : 'discussion2ndText';
         var discSubmitted = wr[discKey] || false;
-        html += '<div style="display:flex; justify-content:space-between; font-size:12px; padding:3px 0;">';
-        html += '<span style="color:var(--text-secondary);"><i class="fas fa-comments" style="width:14px;"></i> 토론' + (attempt === '2nd' ? ' 2차' : '') + '</span>';
-        html += '<span style="font-weight:600; color:' + (discSubmitted ? '#10b981' : 'var(--text-secondary)') + ';">' + (discSubmitted ? '✅ 제출됨' : '미제출') + '</span>';
+        var discLabel = '토론' + (attempt === '2nd' ? ' 2차' : '');
+        html += '<div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:3px 0;">';
+        html += '<span style="color:var(--text-secondary);"><i class="fas fa-comments" style="width:14px;"></i> ' + discLabel + '</span>';
+        if (discSubmitted && wr[discTextKey]) {
+            html += '<span onclick="showWritingTextPopup(\'' + discLabel + '\', \'' + attempt + '\', \'discussion\')" style="font-weight:600; color:#4A90D9; cursor:pointer; text-decoration:underline;">📄 보기</span>';
+        } else if (discSubmitted) {
+            html += '<span style="font-weight:600; color:#10b981;">✅ 제출됨</span>';
+        } else {
+            html += '<span style="font-weight:600; color:var(--text-secondary);">미제출</span>';
+        }
         html += '</div>';
         
         // 2차일 때 1차→2차 점수 비교 추가
@@ -471,8 +487,10 @@ function startSecondAttemptV2() {
         if (firstResult && firstResult.writingResult) {
             var wr = firstResult.writingResult;
             WritingFlowV2.arrange1stResult = wr.arrange1st || null;
-            WritingFlowV2.email1stText = wr.email1stSubmitted ? '(제출됨)' : '';
-            WritingFlowV2.discussion1stText = wr.discussion1stSubmitted ? '(제출됨)' : '';
+            WritingFlowV2.email1stText = wr.email1stText || '';
+            WritingFlowV2.email1stData = wr.email1stData || null;
+            WritingFlowV2.discussion1stText = wr.discussion1stText || '';
+            WritingFlowV2.discussion1stData = wr.discussion1stData || null;
         }
         
         WritingFlowV2.startSecond(moduleNumber, moduleConfig, function(type, writingResult) {
@@ -637,6 +655,72 @@ function showErrorNotePopup(noteText) {
     popup.onclick = function(e) { if (e.target === popup) popup.remove(); };
 }
 
+/**
+ * ★ 이메일/토론 작성 내용 열람 팝업
+ * @param {string} label - '이메일' 또는 '토론' 등 표시용
+ * @param {string} attempt - '1st' 또는 '2nd'
+ * @param {string} type - 'email' 또는 'discussion'
+ */
+function showWritingTextPopup(label, attempt, type) {
+    // 결과 데이터에서 텍스트 가져오기
+    var resultObj = attempt === '1st' ? StageSelector.firstAttemptResult : StageSelector.secondAttemptResult;
+    if (!resultObj || !resultObj.writingResult) {
+        alert('작성 내용을 불러올 수 없습니다.');
+        return;
+    }
+    var wr = resultObj.writingResult;
+    var textKey = type + (attempt === '1st' ? '1st' : '2nd') + 'Text';
+    var text = wr[textKey] || '';
+    
+    if (!text) {
+        alert('작성 내용이 저장되어 있지 않습니다.');
+        return;
+    }
+    
+    // 기존 팝업 제거
+    var existing = document.getElementById('writingTextViewPopup');
+    if (existing) existing.remove();
+    
+    var sectionLabel = { 'reading': '리딩', 'listening': '리스닝', 'writing': '라이팅', 'speaking': '스피킹' }[StageSelector.sectionType] || '';
+    var attemptLabel = attempt === '1st' ? '1차' : '2차';
+    var title = sectionLabel + ' 모듈 ' + StageSelector.moduleNumber + ' — ' + label + ' (' + attemptLabel + ')';
+    
+    // 단어 수 계산
+    var wordCount = text.trim().split(/\s+/).filter(function(w) { return w.length > 0; }).length;
+    
+    var popup = document.createElement('div');
+    popup.id = 'writingTextViewPopup';
+    popup.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    popup.innerHTML =
+        '<div style="background:#fff;border-radius:16px;max-width:620px;width:90%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.3);">' +
+            '<div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">' +
+                '<h3 style="margin:0;font-size:16px;font-weight:700;color:#1e293b;">' +
+                    (type === 'email' ? '📧' : '💬') + ' ' + title +
+                '</h3>' +
+                '<button id="writingTextPopupClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:#94a3b8;padding:4px 8px;">✕</button>' +
+            '</div>' +
+            '<div style="padding:24px;overflow-y:auto;flex:1;">' +
+                '<div style="display:flex;justify-content:space-between;margin-bottom:12px;font-size:13px;color:#64748b;">' +
+                    '<span><i class="fas fa-pen"></i> ' + attemptLabel + ' 작성</span>' +
+                    '<span>' + wordCount + ' words</span>' +
+                '</div>' +
+                '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;font-size:14px;line-height:1.8;color:#334155;white-space:pre-wrap;">' +
+                    text.replace(/</g, '&lt;').replace(/>/g, '&gt;') +
+                '</div>' +
+            '</div>' +
+            '<div style="padding:16px 24px;border-top:1px solid #e2e8f0;text-align:right;">' +
+                '<button id="writingTextPopupCloseBtn" style="padding:10px 24px;background:#9480c5;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">닫기</button>' +
+            '</div>' +
+        '</div>';
+
+    document.body.appendChild(popup);
+
+    // 닫기 이벤트
+    document.getElementById('writingTextPopupClose').onclick = function() { popup.remove(); };
+    document.getElementById('writingTextPopupCloseBtn').onclick = function() { popup.remove(); };
+    popup.onclick = function(e) { if (e.target === popup) popup.remove(); };
+}
+
 function showExplainV2() {
     var sectionType = StageSelector.sectionType;
     console.log('📖 [V2] 해설 보기:', sectionType, StageSelector.moduleNumber);
@@ -656,17 +740,25 @@ function showExplainV2() {
     } else if (sectionType === 'listening' && typeof showListeningExplainV2 === 'function') {
         showListeningExplainV2();
     } else if (sectionType === 'writing' && window.WritingFlowV2) {
-        // ★ 라이팅 해설: 1차 결과에서 arrange 데이터를 WritingFlowV2에 복원
+        // ★ 라이팅 해설: 1차/2차 결과에서 데이터를 WritingFlowV2에 복원
         var firstResult = StageSelector.firstAttemptResult;
         if (firstResult && firstResult.writingResult) {
             var wr = firstResult.writingResult;
             WritingFlowV2.arrange1stResult = wr.arrange1st || null;
             WritingFlowV2.arrange2ndResult = wr.arrange2nd || null;
+            WritingFlowV2.email1stText = wr.email1stText || '';
+            WritingFlowV2.email1stData = wr.email1stData || null;
+            WritingFlowV2.discussion1stText = wr.discussion1stText || '';
+            WritingFlowV2.discussion1stData = wr.discussion1stData || null;
         }
         var secondResult = StageSelector.secondAttemptResult;
         if (secondResult && secondResult.writingResult) {
             var wr2 = secondResult.writingResult;
             WritingFlowV2.arrange2ndResult = wr2.arrange2nd || WritingFlowV2.arrange2ndResult;
+            WritingFlowV2.email2ndText = wr2.email2ndText || '';
+            WritingFlowV2.email2ndData = wr2.email2ndData || null;
+            WritingFlowV2.discussion2ndText = wr2.discussion2ndText || '';
+            WritingFlowV2.discussion2ndData = wr2.discussion2ndData || null;
         }
         var moduleConfig = getModule(sectionType, StageSelector.moduleNumber);
         WritingFlowV2.startExplain(StageSelector.moduleNumber, moduleConfig, function() {
