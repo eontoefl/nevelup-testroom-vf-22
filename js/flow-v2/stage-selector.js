@@ -884,9 +884,19 @@ async function _startSpeakingAttempt(attemptNum, moduleNumber, moduleConfig) {
         
         var speakingResult = { sectionType: 'speaking', componentResults: result.componentResults || [] };
         
-        // ★ 자원 정리: 풀이 끝났을 때 딱 한 번만 실행 (오디오 정지 + 컴포넌트 해제)
-        if (typeof cleanupSpeakingRepeat === 'function') cleanupSpeakingRepeat();
-        if (typeof cleanupSpeakingInterview === 'function') cleanupSpeakingInterview();
+        // ★ 오디오/비디오만 정지 (컴포넌트와 데이터는 유지 — 해설 보기에서 사용)
+        if (window.currentRepeatComponent) {
+            if (window.currentRepeatComponent.currentAudio) {
+                window.currentRepeatComponent.currentAudio.pause();
+            }
+        }
+        if (window.currentInterviewComponent) {
+            if (window.currentInterviewComponent.currentInterviewAudio) {
+                window.currentInterviewComponent.currentInterviewAudio.pause();
+            }
+            var noddingVideo = document.getElementById('interviewNoddingVideo');
+            if (noddingVideo) noddingVideo.pause();
+        }
         
         // ★ 완료 안내 팝업
         if (typeof showGuidePopup === 'function') {
