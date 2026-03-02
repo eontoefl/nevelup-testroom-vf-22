@@ -124,13 +124,10 @@ const StudySave = (function() {
             return null;
         }
         
-        const data = {
-            id: existing.id,
-            second_result_json: JSON.stringify(secondResults)
-        };
-        
         try {
-            const result = await supabaseUpsert(TABLE, data, 'id');
+            const result = await supabaseUpdate(TABLE, `id=eq.${existing.id}`, {
+                second_result_json: JSON.stringify(secondResults)
+            });
             console.log('✅ [StudySave] 2차 결과 저장 완료');
             return result;
         } catch (e) {
@@ -157,13 +154,10 @@ const StudySave = (function() {
             return null;
         }
         
-        const data = {
-            id: existing.id,
-            error_note_submitted: true
-        };
-        
         try {
-            const result = await supabaseUpsert(TABLE, data, 'id');
+            const result = await supabaseUpdate(TABLE, `id=eq.${existing.id}`, {
+                error_note_submitted: true
+            });
             console.log('✅ [StudySave] 오답노트 제출 저장 완료');
             return result;
         } catch (e) {
