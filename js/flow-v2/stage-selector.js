@@ -63,6 +63,8 @@ const StageSelector = {
         if (status1st) { status1st.textContent = '미완료'; status1st.classList.remove('stage-status-done'); }
         var status2nd = document.getElementById('stage2ndStatus');
         if (status2nd) { status2nd.textContent = '미완료'; status2nd.classList.remove('stage-status-done'); }
+        var noteStatus = document.getElementById('stageErrorNoteStatus');
+        if (noteStatus) { noteStatus.textContent = '제출 후 확인 가능'; noteStatus.style.color = ''; }
     },
 
     async _loadFromDB() {
@@ -85,6 +87,17 @@ const StageSelector = {
             updateStageDashboard(saved.secondResult, '2nd');
             var status2nd = document.getElementById('stage2ndStatus');
             if (status2nd) { status2nd.textContent = '✅ 완료'; status2nd.classList.add('stage-status-done'); }
+        }
+
+        // 오답노트 상태
+        var noteStatus = document.getElementById('stageErrorNoteStatus');
+        if (noteStatus) {
+            if (saved.errorNoteSubmitted) {
+                noteStatus.textContent = '✅ 제출 완료';
+                noteStatus.style.color = '#10b981';
+            } else {
+                noteStatus.textContent = '제출 후 확인 가능';
+            }
         }
     }
 };
@@ -400,6 +413,72 @@ function returnToStageSelectAfterRetake(secondResults) {
 function showResultV2() {
     console.log('📊 [V2] 채점 결과 표시 예정:', StageSelector.sectionType, StageSelector.moduleNumber);
     alert('채점 결과 — 아직 구현 전입니다.');
+}
+
+/**
+ * 오답노트 보기 — 대시보드 버튼 클릭 시 호출
+ * DB에서 내용 가져와서 팝업으로 표시
+ */
+async function showErrorNoteV2() {
+    console.log('📝 [V2] 오답노트 보기:', StageSelector.sectionType, StageSelector.moduleNumber);
+
+    if (!window.StudySave) {
+        alert('저장 모듈을 불러올 수 없습니다.');
+        return;
+    }
+
+    var saved = await StudySave.loadSavedResults();
+
+    if (!saved || !saved.errorNoteSubmitted) {
+        alert('아직 제출한 오답노트가 없습니다.\n해설 화면에서 오답노트를 작성해주세요.');
+        return;
+    }
+
+    if (!saved.errorNoteText) {
+        alert('오답노트가 제출되었지만 내용을 불러올 수 없습니다.');
+        return;
+    }
+
+    // 팝업 표시
+    showErrorNotePopup(saved.errorNoteText);
+}
+
+/**
+ * 오답노트 내용 팝업
+ */
+function showErrorNotePopup(noteText) {
+    // 기존 팝업 제거
+    var existing = document.getElementById('errorNoteViewPopup');
+    if (existing) existing.remove();
+
+    var sectionLabel = { 'reading': '리딩', 'listening': '리스닝', 'writing': '라이팅', 'speaking': '스피킹' }[StageSelector.sectionType] || '';
+    var title = sectionLabel + ' 모듈 ' + StageSelector.moduleNumber + ' — 오답노트';
+
+    var popup = document.createElement('div');
+    popup.id = 'errorNoteViewPopup';
+    popup.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    popup.innerHTML =
+        '<div style="background:#fff;border-radius:16px;max-width:560px;width:90%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.3);">' +
+            '<div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">' +
+                '<h3 style="margin:0;font-size:16px;font-weight:700;color:#1e293b;">📝 ' + title + '</h3>' +
+                '<button id="errorNotePopupClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:#94a3b8;padding:4px 8px;">✕</button>' +
+            '</div>' +
+            '<div style="padding:24px;overflow-y:auto;flex:1;">' +
+                '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;font-size:14px;line-height:1.8;color:#334155;white-space:pre-wrap;">' +
+                    noteText.replace(/</g, '&lt;').replace(/>/g, '&gt;') +
+                '</div>' +
+            '</div>' +
+            '<div style="padding:16px 24px;border-top:1px solid #e2e8f0;text-align:right;">' +
+                '<button id="errorNotePopupCloseBtn" style="padding:10px 24px;background:#9480c5;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">닫기</button>' +
+            '</div>' +
+        '</div>';
+
+    document.body.appendChild(popup);
+
+    // 닫기 이벤트
+    document.getElementById('errorNotePopupClose').onclick = function() { popup.remove(); };
+    document.getElementById('errorNotePopupCloseBtn').onclick = function() { popup.remove(); };
+    popup.onclick = function(e) { if (e.target === popup) popup.remove(); };
 }
 
 function showExplainV2() {
