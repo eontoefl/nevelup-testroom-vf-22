@@ -204,76 +204,92 @@ function returnToStageSelect(result) {
  * 오른쪽 채점 대시보드 업데이트
  */
 function updateStageDashboard(result, attempt) {
-    // 점수 계산
     var totalCorrect = 0;
-    var totalQuestions = result.totalQuestions || 0;
-    var componentScores = [];
-    
-    if (result.componentResults) {
-        result.componentResults.forEach(function(comp) {
-            var answers = comp.answers || comp.results || [];
-            var correct = answers.filter(function(a) { return a.isCorrect; }).length;
-            totalCorrect += correct;
-            
-            var nameMap = {
-                'fillblanks': '빈칸채우기',
-                'daily1': '일상리딩 1',
-                'daily2': '일상리딩 2',
-                'academic': '아카데믹',
-                'response': '응답',
-                'conver': '대화',
-                'announcement': '공지사항',
-                'lecture': '강의'
-            };
-            componentScores.push({
-                name: nameMap[comp.componentType] || comp.componentType,
-                correct: correct,
-                total: answers.length
-            });
-        });
-    }
-    
-    // 레벨 계산
+    var totalQuestions = 0;
     var level = 0;
-    var sectionType = StageSelector.sectionType;
-    if (sectionType === 'reading') {
-        if (totalCorrect <= 3) level = 1.0;
-        else if (totalCorrect <= 6) level = 1.5;
-        else if (totalCorrect <= 10) level = 2.0;
-        else if (totalCorrect <= 13) level = 2.5;
-        else if (totalCorrect <= 17) level = 3.0;
-        else if (totalCorrect <= 20) level = 3.5;
-        else if (totalCorrect <= 24) level = 4.0;
-        else if (totalCorrect <= 27) level = 4.5;
-        else if (totalCorrect <= 30) level = 5.0;
-        else if (totalCorrect <= 32) level = 5.5;
-        else level = 6.0;
-    }
-    
-    // DOM 업데이트
+    var componentScores = [];
     var suffix = attempt === '1st' ? '1st' : '2nd';
     
+    // 2차 데이터: 이미 계산된 점수가 들어있음
+    if (attempt === '2nd' && result.secondAttempt) {
+        var sa = result.secondAttempt;
+        totalCorrect = sa.score || 0;
+        totalQuestions = StageSelector.firstAttemptResult ? StageSelector.firstAttemptResult.totalQuestions : 35;
+        level = sa.level || 0;
+        
+        // 개선량 표시
+        var detailEl = document.getElementById('stageDetail2nd');
+        if (detailEl) {
+            var improvement = result.improvement || {};
+            var html = '';
+            html += '<div style="display:flex; justify-content:space-between; font-size:12px; padding:3px 0;">';
+            html += '<span style="color:var(--text-secondary);">점수 변화</span>';
+            html += '<span style="font-weight:600; color:' + (improvement.scoreDiff > 0 ? '#10b981' : 'var(--text-primary)') + ';">';
+            html += (improvement.scoreDiff > 0 ? '+' : '') + (improvement.scoreDiff || 0) + '문제';
+            html += '</span></div>';
+            html += '<div style="display:flex; justify-content:space-between; font-size:12px; padding:3px 0;">';
+            html += '<span style="color:var(--text-secondary);">레벨 변화</span>';
+            html += '<span style="font-weight:600; color:' + (improvement.levelDiff > 0 ? '#10b981' : 'var(--text-primary)') + ';">';
+            html += (improvement.levelDiff > 0 ? '+' : '') + (improvement.levelDiff || 0).toFixed(1);
+            html += '</span></div>';
+            detailEl.innerHTML = html;
+        }
+    }
+    // 1차 데이터: 답안 목록에서 점수 계산
+    else {
+        totalQuestions = result.totalQuestions || 0;
+        if (result.componentResults) {
+            var nameMap = {
+                'fillblanks': '빈칸채우기', 'daily1': '일상리딩 1', 'daily2': '일상리딩 2',
+                'academic': '아카데믹', 'response': '응답', 'conver': '대화',
+                'announcement': '공지사항', 'lecture': '강의'
+            };
+            result.componentResults.forEach(function(comp) {
+                var answers = comp.answers || comp.results || [];
+                var correct = answers.filter(function(a) { return a.isCorrect; }).length;
+                totalCorrect += correct;
+                componentScores.push({ name: nameMap[comp.componentType] || comp.componentType, correct: correct, total: answers.length });
+            });
+        }
+        
+        // 레벨 계산
+        var sectionType = StageSelector.sectionType;
+        if (sectionType === 'reading') {
+            if (totalCorrect <= 3) level = 1.0;
+            else if (totalCorrect <= 6) level = 1.5;
+            else if (totalCorrect <= 10) level = 2.0;
+            else if (totalCorrect <= 13) level = 2.5;
+            else if (totalCorrect <= 17) level = 3.0;
+            else if (totalCorrect <= 20) level = 3.5;
+            else if (totalCorrect <= 24) level = 4.0;
+            else if (totalCorrect <= 27) level = 4.5;
+            else if (totalCorrect <= 30) level = 5.0;
+            else if (totalCorrect <= 32) level = 5.5;
+            else level = 6.0;
+        }
+        
+        // 파트별 점수
+        var detailEl = document.getElementById('stageDetail' + suffix);
+        if (detailEl) {
+            var html = '';
+            componentScores.forEach(function(comp) {
+                html += '<div style="display:flex; justify-content:space-between; font-size:12px; padding:3px 0;">';
+                html += '<span style="color:var(--text-secondary);">' + comp.name + '</span>';
+                html += '<span style="font-weight:600; color:var(--text-primary);">' + comp.correct + '/' + comp.total + '</span>';
+                html += '</div>';
+            });
+            detailEl.innerHTML = html;
+        }
+    }
+    
+    // 공통 DOM 업데이트
     var scoreEl = document.getElementById('stageScore' + suffix);
     if (scoreEl) {
         scoreEl.innerHTML = totalCorrect + '<span style="font-size:14px; font-weight:400; color:var(--text-secondary);">/' + totalQuestions + '</span>';
     }
-    
     var levelEl = document.getElementById('stageLevel' + suffix);
     if (levelEl) {
         levelEl.textContent = '레벨 ' + level.toFixed(1);
-    }
-    
-    // 파트별 점수
-    var detailEl = document.getElementById('stageDetail' + suffix);
-    if (detailEl) {
-        var html = '';
-        componentScores.forEach(function(comp) {
-            html += '<div style="display:flex; justify-content:space-between; font-size:12px; padding:3px 0;">';
-            html += '<span style="color:var(--text-secondary);">' + comp.name + '</span>';
-            html += '<span style="font-weight:600; color:var(--text-primary);">' + comp.correct + '/' + comp.total + '</span>';
-            html += '</div>';
-        });
-        detailEl.innerHTML = html;
     }
     
     console.log('📊 [V2] 대시보드 업데이트:', attempt, totalCorrect + '/' + totalQuestions, '레벨', level.toFixed(1));
@@ -341,19 +357,15 @@ function addReturnButtonToRetakeResult(secondResults) {
     const existing = retakeScreen.querySelector('.v2-return-btn');
     if (existing) existing.remove();
     
-    // 네비게이션 영역 찾기
-    const navArea = retakeScreen.querySelector('.retake-navigation');
-    if (!navArea) return;
-    
-    // 버튼 추가
+    // 버튼 추가 (화면 하단에 직접 삽입)
     const returnBtn = document.createElement('button');
     returnBtn.className = 'btn btn-secondary btn-large v2-return-btn';
-    returnBtn.style.cssText = 'margin-top:12px; width:100%; background:#9480c5; color:#fff; border:none; padding:14px 24px; border-radius:12px; font-size:16px; font-weight:600; cursor:pointer;';
+    returnBtn.style.cssText = 'margin:20px auto; display:block; width:90%; max-width:400px; background:#9480c5; color:#fff; border:none; padding:14px 24px; border-radius:12px; font-size:16px; font-weight:600; cursor:pointer;';
     returnBtn.textContent = '📋 과제 화면으로 돌아가기';
     returnBtn.onclick = function() {
         returnToStageSelectAfterRetake(secondResults);
     };
-    navArea.appendChild(returnBtn);
+    retakeScreen.appendChild(returnBtn);
     
     console.log('✅ [V2] "과제 화면으로 돌아가기" 버튼 추가 완료');
 }
@@ -373,40 +385,8 @@ function returnToStageSelectAfterRetake(secondResults) {
     if (screen) screen.style.display = 'block';
     
     // 대시보드에 2차 점수 업데이트
-    if (secondResults && secondResults.secondAttempt) {
-        var sa = secondResults.secondAttempt;
-        var totalQuestions = StageSelector.firstAttemptResult ? StageSelector.firstAttemptResult.totalQuestions : 35;
-        
-        // 2차 점수 DOM 업데이트
-        var scoreEl = document.getElementById('stageScore2nd');
-        if (scoreEl) {
-            scoreEl.innerHTML = sa.score + '<span style="font-size:14px; font-weight:400; color:var(--text-secondary);">/' + totalQuestions + '</span>';
-        }
-        
-        var levelEl = document.getElementById('stageLevel2nd');
-        if (levelEl) {
-            levelEl.textContent = '레벨 ' + sa.level.toFixed(1);
-        }
-        
-        // 2차 파트별 점수 (2차 결과에서는 파트별 분리 정보가 없으므로 전체만 표시)
-        var detailEl = document.getElementById('stageDetail2nd');
-        if (detailEl) {
-            var improvement = secondResults.improvement || {};
-            var html = '';
-            html += '<div style="display:flex; justify-content:space-between; font-size:12px; padding:3px 0;">';
-            html += '<span style="color:var(--text-secondary);">점수 변화</span>';
-            html += '<span style="font-weight:600; color:' + (improvement.scoreDiff > 0 ? '#10b981' : 'var(--text-primary)') + ';">';
-            html += (improvement.scoreDiff > 0 ? '+' : '') + (improvement.scoreDiff || 0) + '문제';
-            html += '</span></div>';
-            html += '<div style="display:flex; justify-content:space-between; font-size:12px; padding:3px 0;">';
-            html += '<span style="color:var(--text-secondary);">레벨 변화</span>';
-            html += '<span style="font-weight:600; color:' + (improvement.levelDiff > 0 ? '#10b981' : 'var(--text-primary)') + ';">';
-            html += (improvement.levelDiff > 0 ? '+' : '') + (improvement.levelDiff || 0).toFixed(1);
-            html += '</span></div>';
-            detailEl.innerHTML = html;
-        }
-        
-        console.log('📊 [V2] 대시보드 2차 업데이트:', sa.score + '/' + totalQuestions, '레벨', sa.level.toFixed(1));
+    if (secondResults) {
+        updateStageDashboard(secondResults, '2nd');
     }
     
     // 2차 풀이 상태 업데이트
