@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 2 화요일 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #9480c5;
+            text-align: center;
+        }
+        .button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            background: linear-gradient(135deg, #9480c5 0%, #b9a8d4 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(148, 128, 197, 0.3);
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 8px;
+            display: none;
+        }
+        .result.show {
+            display: block;
+        }
+        .log {
+            background: #f5f5f5;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Week 2 화요일 버튼 테스트</h1>
+        
+        <button class="button" onclick="testWeek2Tuesday()">
+            Week 2 - 화요일 클릭 테스트
+        </button>
+        
+        <button class="button" onclick="testVocabInit()">
+            내벨업보카 직접 시작 테스트
+        </button>
+        
+        <button class="button" onclick="checkData()">
+            데이터 구조 확인
+        </button>
+        
+        <div id="result" class="result">
+            <h3>✅ 테스트 결과:</h3>
+            <div id="resultContent"></div>
+        </div>
+        
+        <div class="log" id="log">
+            <strong>로그:</strong><br>
+        </div>
+    </div>
+
+    <script>
+        const log = (message) => {
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += `${new Date().toLocaleTimeString()}: ${message}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        };
+
+        const showResult = (content) => {
+            const resultDiv = document.getElementById('result');
+            const resultContent = document.getElementById('resultContent');
+            resultContent.innerHTML = content;
+            resultDiv.classList.add('show');
+        };
+
+        function testWeek2Tuesday() {
+            log('📌 Week 2 화요일 버튼 클릭 테스트 시작');
+            
+            // 부모 창의 함수 호출 시도
+            try {
+                if (window.parent && window.parent.selectDay) {
+                    log('✅ selectDay 함수 찾음');
+                    window.parent.selectDay(2, '화');
+                    showResult('Week 2 화요일 selectDay(2, "화") 호출 완료!');
+                } else if (typeof selectDay === 'function') {
+                    log('✅ 현재 창에서 selectDay 함수 찾음');
+                    selectDay(2, '화');
+                    showResult('Week 2 화요일 selectDay(2, "화") 호출 완료!');
+                } else {
+                    log('❌ selectDay 함수를 찾을 수 없음');
+                    showResult('❌ selectDay 함수를 찾을 수 없습니다.<br>main.js가 로드되지 않았을 수 있습니다.');
+                }
+            } catch (error) {
+                log(`❌ 에러: ${error.message}`);
+                showResult(`❌ 에러 발생: ${error.message}`);
+            }
+        }
+
+        function testVocabInit() {
+            log('📌 내벨업보카 직접 시작 테스트');
+            
+            try {
+                if (typeof initVocabTest === 'function') {
+                    log('✅ initVocabTest 함수 찾음');
+                    initVocabTest('5-6');
+                    showResult('내벨업보카 시험 (p.5-6) 시작!');
+                } else {
+                    log('❌ initVocabTest 함수를 찾을 수 없음');
+                    showResult('❌ initVocabTest 함수를 찾을 수 없습니다.<br>vocab-test-logic.js가 로드되지 않았을 수 있습니다.');
+                }
+            } catch (error) {
+                log(`❌ 에러: ${error.message}`);
+                showResult(`❌ 에러 발생: ${error.message}`);
+            }
+        }
+
+        function checkData() {
+            log('📌 데이터 구조 확인');
+            
+            let result = '<strong>Week 2 화요일 데이터:</strong><br><pre>';
+            
+            if (typeof demoTasks !== 'undefined') {
+                log('✅ demoTasks 찾음');
+                const standard = demoTasks['내벨업챌린지 - Standard'];
+                if (standard && standard.week2 && standard.week2['화']) {
+                    const data = standard.week2['화'];
+                    result += JSON.stringify(data, null, 2);
+                    log(`✅ Week 2 화요일 데이터: ${JSON.stringify(data)}`);
+                } else {
+                    result += '데이터 없음';
+                    log('❌ Week 2 화요일 데이터 없음');
+                }
+            } else {
+                result += 'demoTasks가 정의되지 않음';
+                log('❌ demoTasks가 정의되지 않음');
+            }
+            
+            result += '</pre>';
+            showResult(result);
+        }
+
+        log('✅ 테스트 페이지 로드 완료');
+        log('📝 버튼을 클릭하여 테스트를 시작하세요');
+    </script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>최종 2개 파일 교체</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f6f8fa; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 { text-align: center; color: #24292f; margin-bottom: 8px; }
+        .subtitle { text-align: center; color: #656d76; margin-bottom: 24px; }
+        .warning { background: #dafbe1; border: 1px solid #2da44e; border-radius: 8px; padding: 14px 18px; margin-bottom: 24px; font-size: 14px; color: #1a7f37; }
+        .file-card { background: #fff; border: 1px solid #d0d7de; border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
+        .file-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: #f6f8fa; border-bottom: 1px solid #d0d7de; }
+        .file-name { font-weight: 600; color: #24292f; font-size: 16px; }
+        .file-path { font-size: 12px; color: #656d76; margin-top: 2px; }
+        .file-size { font-size: 13px; color: #656d76; background: #ddf4ff; padding: 4px 10px; border-radius: 20px; }
+        .file-actions { padding: 16px 20px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .btn { padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+        .btn-copy { background: #0969da; color: white; }
+        .btn-copy:hover { background: #0550ae; }
+        .btn-download { background: #2da44e; color: white; }
+        .btn-download:hover { background: #218838; }
+        .status { font-size: 13px; color: #656d76; margin-left: auto; }
+        .status.done { color: #2da44e; font-weight: 600; }
+        .status.error { color: #cf222e; }
+        .steps { background: #fff; border: 1px solid #d0d7de; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+        .steps h2 { font-size: 16px; margin-bottom: 12px; }
+        .steps ol { padding-left: 20px; }
+        .steps li { margin-bottom: 8px; line-height: 1.6; }
+        .steps code { background: #f6f8fa; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+        .verify { background: #fff; border: 1px solid #d0d7de; border-radius: 12px; padding: 20px; margin-top: 24px; }
+        .verify h2 { font-size: 16px; margin-bottom: 8px; }
+        .script-box { background: #24292f; color: #e6edf3; padding: 14px; border-radius: 8px; font-family: monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; margin-top: 8px; position: relative; max-height: 300px; overflow-y: auto; }
+        .copy-btn { position: absolute; top: 6px; right: 6px; background: #444; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔧 최종 2개 파일 교체</h1>
+    <p class="subtitle">나머지 8개 파일은 이미 최신 ✅</p>
+    
+    <div class="warning">
+        ✅ <b>교체 필요:</b> FlowController.js, module-controller.js — 이 2개만 교체하면 라이팅 플로우가 정상 작동합니다!
+    </div>
+    
+    <div class="steps">
+        <h2>📋 교체 방법 (파일당 1분)</h2>
+        <ol>
+            <li><b>"📋 클립보드 복사"</b> 클릭</li>
+            <li>GitHub → 해당 파일 경로로 이동</li>
+            <li>✏️ 연필 아이콘 클릭 (Edit)</li>
+            <li><code>Ctrl+A</code> → <code>Ctrl+V</code> (전체 선택 후 붙여넣기)</li>
+            <li><b>Commit changes</b> 클릭 (팝업에서 한 번 더 클릭!)</li>
+        </ol>
+    </div>
+
+    <!-- File 1 -->
+    <div class="file-card">
+        <div class="file-header">
+            <div>
+                <div class="file-name">1️⃣ FlowController.js</div>
+                <div class="file-path">GitHub 경로: js/FlowController.js</div>
+            </div>
+            <div class="file-size" id="size1">로딩중...</div>
+        </div>
+        <div class="file-actions">
+            <button class="btn btn-copy" onclick="copyFile(0)">📋 클립보드 복사</button>
+            <button class="btn btn-download" onclick="downloadFile(0)">📥 다운로드</button>
+            <span class="status" id="status0"></span>
+        </div>
+    </div>
+
+    <!-- File 2 -->
+    <div class="file-card">
+        <div class="file-header">
+            <div>
+                <div class="file-name">2️⃣ module-controller.js</div>
+                <div class="file-path">GitHub 경로: js/module-controller.js</div>
+            </div>
+            <div class="file-size" id="size2">로딩중...</div>
+        </div>
+        <div class="file-actions">
+            <button class="btn btn-copy" onclick="copyFile(1)">📋 클립보드 복사</button>
+            <button class="btn btn-download" onclick="downloadFile(1)">📥 다운로드</button>
+            <span class="status" id="status1"></span>
+        </div>
+    </div>
+
+    <!-- Verify -->
+    <div class="verify">
+        <h2>✅ 교체 후 검증 (Vercel 콘솔에서 실행)</h2>
+        <div class="script-box" id="verifyScript">
+<button class="copy-btn" onclick="copyVerify()">복사</button>
+(async function() {
+  const files = [
+    ['js/FlowController.js', ['WritingFlow.start', 'writing_mixed → WritingFlow']],
+    ['js/module-controller.js', ['speaking_header']]
+  ];
+  let pass = 0, fail = 0;
+  for (const [file, keywords] of files) {
+    const resp = await fetch(file + '?_t=' + Date.now());
+    const text = await resp.text();
+    const ok = keywords.every(k => text.includes(k));
+    console.log((ok ? '✅' : '❌') + ' ' + file + ' (' + text.length + 'bytes)');
+    ok ? pass++ : fail++;
+  }
+  console.log(fail === 0 ? '🎉 모든 파일 최신!' : '⚠️ 교체 필요');
+})();
+        </div>
+    </div>
+</div>
+
+<script>
+const FILES = [
+    { path: 'js/FlowController.js', name: 'FlowController.js' },
+    { path: 'js/module-controller.js', name: 'module-controller.js' }
+];
+const cache = {};
+
+window.addEventListener('load', async () => {
+    for (let i = 0; i < FILES.length; i++) {
+        try {
+            const resp = await fetch(FILES[i].path + '?_t=' + Date.now());
+            const text = await resp.text();
+            cache[i] = text;
+            document.getElementById('size' + (i+1)).textContent = text.length.toLocaleString() + ' bytes';
+        } catch(e) {
+            document.getElementById('size' + (i+1)).textContent = '❌ 로드 실패';
+        }
+    }
+});
+
+async function copyFile(idx) {
+    const statusEl = document.getElementById('status' + idx);
+    try {
+        let text = cache[idx];
+        if (!text) {
+            const resp = await fetch(FILES[idx].path + '?_t=' + Date.now());
+            text = await resp.text();
+            cache[idx] = text;
+        }
+        await navigator.clipboard.writeText(text);
+        statusEl.textContent = '✅ 복사 완료! GitHub에서 Ctrl+A → Ctrl+V';
+        statusEl.className = 'status done';
+    } catch(e) {
+        // fallback
+        const ta = document.createElement('textarea');
+        ta.value = cache[idx] || '';
+        ta.style.cssText = 'position:fixed;left:-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        statusEl.textContent = '✅ 복사 완료! (fallback)';
+        statusEl.className = 'status done';
+    }
+}
+
+function downloadFile(idx) {
+    const text = cache[idx];
+    if (!text) { alert('파일 로딩 중...'); return; }
+    const blob = new Blob([text], { type: 'text/javascript;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = FILES[idx].name;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+    document.getElementById('status' + idx).textContent = '✅ 다운로드 완료!';
+    document.getElementById('status' + idx).className = 'status done';
+}
+
+function copyVerify() {
+    const text = document.getElementById('verifyScript').textContent.replace('복사', '').trim();
+    navigator.clipboard.writeText(text);
+    document.querySelector('.copy-btn').textContent = '✅ 복사됨!';
+    setTimeout(() => document.querySelector('.copy-btn').textContent = '복사', 2000);
+}
+</script>
+</body>
+</html>
