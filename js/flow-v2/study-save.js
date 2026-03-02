@@ -139,7 +139,7 @@ const StudySave = (function() {
     /**
      * 오답노트 제출 상태 + 내용 저장
      */
-    async function saveErrorNoteSubmitted(noteText) {
+    async function saveErrorNoteSubmitted(noteText, speakingFile1, speakingFile2) {
         console.log('💾 [StudySave] 오답노트 제출 저장 시작');
         
         const key = _getSessionKey();
@@ -161,8 +161,15 @@ const StudySave = (function() {
             if (noteText) {
                 updateData.error_note_text = noteText;
             }
+            // ★ 스피킹 녹음 파일 경로 저장
+            if (speakingFile1) {
+                updateData.speaking_file_1 = speakingFile1;
+            }
+            if (speakingFile2) {
+                updateData.speaking_file_2 = speakingFile2;
+            }
             const result = await supabaseUpdate(TABLE, `id=eq.${existing.id}`, updateData);
-            console.log('✅ [StudySave] 오답노트 제출 저장 완료' + (noteText ? ' (내용 ' + noteText.length + '자)' : ''));
+            console.log('✅ [StudySave] 오답노트 제출 저장 완료' + (noteText ? ' (내용 ' + noteText.length + '자)' : '') + (speakingFile1 ? ' (녹음파일 포함)' : ''));
             return result;
         } catch (e) {
             console.error('❌ [StudySave] 오답노트 저장 실패:', e);
@@ -171,8 +178,9 @@ const StudySave = (function() {
     }
     
     /**
-     * 인증률 계산 (boolean 3개 체크)
-     * @returns {object} { total: 3, completed: N, percentage: N }
+     * 인증률 계산
+     * 리딩/리스닝/라이팅: 3단계 (1차 + 2차 + 오답노트 = 100%)
+     * 스피킹: 3단계 (1차 30% + 2차 30% + 오답노트 40% = 100%)
      */
     async function getAuthRate() {
         const key = _getSessionKey();
@@ -181,6 +189,25 @@ const StudySave = (function() {
         const existing = await _findExisting(key);
         if (!existing) return { total: 3, completed: 0, percentage: 0 };
         
+        // 스피킹 전용 인증률 (30 + 30 + 40)
+        var sectionType = null;
+        if (existing.first_result_json) {
+            try {
+                var parsed = JSON.parse(existing.first_result_json);
+                sectionType = parsed.sectionType || null;
+            } catch(e) {}
+        }
+        
+        if (sectionType === 'speaking') {
+            var rate = 0;
+            var cnt = 0;
+            if (existing.first_result_json) { rate += 30; cnt++; }
+            if (existing.second_result_json) { rate += 30; cnt++; }
+            if (existing.error_note_submitted) { rate += 40; cnt++; }
+            return { total: 3, completed: cnt, percentage: rate };
+        }
+        
+        // 기본: 리딩/리스닝/라이팅 (균등 분배)
         let completed = 0;
         if (existing.first_result_json) completed++;
         if (existing.second_result_json) completed++;
@@ -207,7 +234,9 @@ const StudySave = (function() {
             firstResult: existing.first_result_json ? JSON.parse(existing.first_result_json) : null,
             secondResult: existing.second_result_json ? JSON.parse(existing.second_result_json) : null,
             errorNoteSubmitted: existing.error_note_submitted || false,
-            errorNoteText: existing.error_note_text || null
+            errorNoteText: existing.error_note_text || null,
+            speakingFile1: existing.speaking_file_1 || null,
+            speakingFile2: existing.speaking_file_2 || null
         };
     }
     

@@ -62,6 +62,10 @@ const StageSelector = {
         if (sectionType === 'writing') {
             this._resetWritingDashboard();
         }
+        // ★ 스피킹: 대시보드 오른쪽 영역을 스피킹 전용 형태로 변경
+        if (sectionType === 'speaking') {
+            this._resetSpeakingDashboard();
+        }
 
         // 완료 상태 비우기
         var status1st = document.getElementById('stage1stStatus');
@@ -75,6 +79,26 @@ const StageSelector = {
     /**
      * 라이팅 대시보드 초기화 (점수+레벨 → 단어배열 점수+제출 상태 형태로 전환)
      */
+    /**
+     * 스피킹 대시보드 초기화 (점수+레벨 → 따라말하기/인터뷰 완료 상태 형태로 전환)
+     */
+    _resetSpeakingDashboard() {
+        ['1st', '2nd'].forEach(function(suffix) {
+            var scoreEl = document.getElementById('stageScore' + suffix);
+            if (scoreEl) {
+                scoreEl.innerHTML = '<span style="font-size:18px;">-</span>';
+            }
+            var levelEl = document.getElementById('stageLevel' + suffix);
+            if (levelEl) {
+                levelEl.textContent = '';  // 스피킹은 레벨 없음
+            }
+            var detailEl = document.getElementById('stageDetail' + suffix);
+            if (detailEl) {
+                detailEl.innerHTML = '<div style="font-size:11px; color:var(--text-secondary); text-align:center;">풀이 후 표시됩니다</div>';
+            }
+        });
+    },
+
     _resetWritingDashboard() {
         ['1st', '2nd'].forEach(function(suffix) {
             var scoreEl = document.getElementById('stageScore' + suffix);
@@ -132,6 +156,14 @@ const StageSelector = {
  * 화면 전환 + DB에서 최신 상태 다시 읽기
  */
 function backToStageSelect() {
+    // ★ 자원 정리: 스피킹 컴포넌트 오디오 정지 + 해제 (한 곳에서만 실행)
+    if (typeof cleanupSpeakingRepeat === 'function') {
+        cleanupSpeakingRepeat();
+    }
+    if (typeof cleanupSpeakingInterview === 'function') {
+        cleanupSpeakingInterview();
+    }
+    
     document.querySelectorAll('.screen').forEach(function(s) { s.style.display = 'none'; });
     document.querySelectorAll('.result-screen, .test-screen').forEach(function(s) { s.style.display = 'none'; });
     var screen = document.getElementById('stageSelectScreen');
@@ -155,6 +187,12 @@ function startFirstAttemptV2() {
     if (!moduleConfig) {
         console.error('❌ [V2] 모듈 설정을 찾을 수 없습니다:', sectionType, moduleNumber);
         alert('모듈을 찾을 수 없습니다.');
+        return;
+    }
+    
+    // ★ 스피킹: 가이드 팝업 → ModuleController로 풀이
+    if (sectionType === 'speaking') {
+        _startSpeakingAttempt(1, moduleNumber, moduleConfig);
         return;
     }
     
@@ -264,6 +302,12 @@ function updateStageDashboard(result, attempt) {
     // ★ 라이팅 전용 대시보드 업데이트
     if (StageSelector.sectionType === 'writing' || (result && result.sectionType === 'writing')) {
         updateWritingDashboard(result, attempt);
+        return;
+    }
+    
+    // ★ 스피킹 전용 대시보드 업데이트
+    if (StageSelector.sectionType === 'speaking' || (result && result.sectionType === 'speaking')) {
+        updateSpeakingDashboard(result, attempt);
         return;
     }
     
@@ -460,6 +504,44 @@ function updateWritingDashboard(result, attempt) {
     console.log('📊 [V2] 라이팅 대시보드 업데이트:', attempt, arrangeCorrect + '/' + arrangeTotal);
 }
 
+/**
+ * ★ 스피킹 전용 대시보드 업데이트
+ * 점수/레벨 대신 따라말하기 ✅ / 인터뷰 ✅ 완료 상태 표시
+ */
+function updateSpeakingDashboard(result, attempt) {
+    var suffix = attempt === '1st' ? '1st' : '2nd';
+    
+    // 점수 영역에 완료 표시
+    var scoreEl = document.getElementById('stageScore' + suffix);
+    if (scoreEl) {
+        scoreEl.innerHTML = '<span style="font-size:18px; color:#10b981;">✅</span>';
+    }
+    
+    // 레벨 대신 "답변 완료" 표시
+    var levelEl = document.getElementById('stageLevel' + suffix);
+    if (levelEl) {
+        levelEl.textContent = attempt === '1st' ? '1차 답변' : '2차 답변';
+        levelEl.style.color = 'var(--text-secondary)';
+    }
+    
+    // 상세 영역: 따라말하기/인터뷰 완료 상태
+    var detailEl = document.getElementById('stageDetail' + suffix);
+    if (detailEl) {
+        var html = '';
+        html += '<div style="display:flex; justify-content:space-between; font-size:12px; padding:3px 0;">';
+        html += '<span style="color:var(--text-secondary);"><i class="fas fa-microphone" style="width:14px;"></i> 따라말하기</span>';
+        html += '<span style="font-weight:600; color:#10b981;">✅ 완료</span>';
+        html += '</div>';
+        html += '<div style="display:flex; justify-content:space-between; font-size:12px; padding:3px 0;">';
+        html += '<span style="color:var(--text-secondary);"><i class="fas fa-user-tie" style="width:14px;"></i> 인터뷰</span>';
+        html += '<span style="font-weight:600; color:#10b981;">✅ 완료</span>';
+        html += '</div>';
+        detailEl.innerHTML = html;
+    }
+    
+    console.log('📊 [V2] 스피킹 대시보드 업데이트:', attempt, '답변 완료');
+}
+
 function startSecondAttemptV2() {
     const sectionType = StageSelector.sectionType;
     const moduleNumber = StageSelector.moduleNumber;
@@ -471,6 +553,17 @@ function startSecondAttemptV2() {
     if (!firstResult) {
         alert('1차 풀이를 먼저 완료해주세요.');
         console.warn('⚠️ [V2] 1차 결과 없음 — 2차 풀이 불가');
+        return;
+    }
+    
+    // ★ 스피킹: 가이드 팝업 → ModuleController로 2차 풀이
+    if (sectionType === 'speaking') {
+        const moduleConfig = getModule(sectionType, moduleNumber);
+        if (!moduleConfig) {
+            alert('모듈을 찾을 수 없습니다.');
+            return;
+        }
+        _startSpeakingAttempt(2, moduleNumber, moduleConfig);
         return;
     }
     
@@ -764,8 +857,136 @@ function showExplainV2() {
         WritingFlowV2.startExplain(StageSelector.moduleNumber, moduleConfig, function() {
             backToStageSelect();
         });
+    } else if (sectionType === 'speaking') {
+        // ★ 스피킹 해설: 따라말하기 복습 → 인터뷰 복습 → 대시보드
+        _showSpeakingExplainV2();
     } else {
         alert('해설 보기 — 아직 구현 전입니다 (' + sectionType + ')');
+    }
+}
+
+// ========================================
+// ★ 스피킹 풀이 공통 함수 (1차/2차)
+// ========================================
+async function _startSpeakingAttempt(attemptNum, moduleNumber, moduleConfig) {
+    console.log('🎤 [V2] 스피킹 ' + attemptNum + '차 답변 시작: Module', moduleNumber);
+    
+    // 가이드 팝업 표시
+    if (typeof showGuidePopup === 'function') {
+        await showGuidePopup({
+            icon: '🎤',
+            title: attemptNum + '차 답변을 시작합니다',
+            desc: '휴대폰 <b>녹음 기능을 켠 채로</b> 시작해주세요.',
+            notice: '녹음 파일은 오답노트 제출 시 첨부해야 합니다.',
+            btn: '시작하기',
+            theme: attemptNum === 1 ? 'theme-purple' : 'theme-blue'
+        });
+    }
+    
+    // ModuleController 생성 및 시작
+    var controller = new ModuleController(moduleConfig);
+    window.moduleController = controller;
+    
+    controller.setOnComplete(function(result) {
+        console.log('✅ [V2] 스피킹 ' + attemptNum + '차 답변 완료:', result);
+        
+        var speakingResult = { sectionType: 'speaking', componentResults: result.componentResults || [] };
+        
+        if (attemptNum === 1) {
+            StageSelector.firstAttemptResult = speakingResult;
+            if (window.StudySave) StudySave.saveFirstResult(speakingResult);
+            backToStageSelect();
+            updateSpeakingDashboard(speakingResult, '1st');
+            var status1st = document.getElementById('stage1stStatus');
+            if (status1st) { status1st.textContent = '✅ 완료'; status1st.classList.add('stage-status-done'); }
+        } else {
+            StageSelector.secondAttemptResult = speakingResult;
+            if (window.StudySave) StudySave.saveSecondResult(speakingResult);
+            backToStageSelect();
+            updateSpeakingDashboard(speakingResult, '2nd');
+            var status2nd = document.getElementById('stage2ndStatus');
+            if (status2nd) { status2nd.textContent = '✅ 완료'; status2nd.classList.add('stage-status-done'); }
+        }
+    });
+    
+    controller.startModule();
+}
+
+// ========================================
+// ★ 스피킹 해설 보기 (따라말하기 복습 → 인터뷰 복습 → 대시보드)
+// ========================================
+function _showSpeakingExplainV2() {
+    console.log('🎤 [V2] 스피킹 해설 시작: 따라말하기 복습');
+    
+    // 모든 화면 숨기기
+    document.querySelectorAll('.screen').forEach(function(s) { s.style.display = 'none'; });
+    document.querySelectorAll('.result-screen, .test-screen').forEach(function(s) { s.style.display = 'none'; });
+    
+    // 1. 따라말하기 복습 화면 표시
+    var repeatScreen = document.getElementById('speakingRepeatResultScreen');
+    if (repeatScreen && window.currentRepeatComponent) {
+        repeatScreen.style.display = 'block';
+        
+        var repeatSetIndex = (window.currentRepeatComponent.setId || 1) - 1;
+        var set = window.currentRepeatComponent.speakingRepeatData?.sets?.[repeatSetIndex] || window.currentRepeatComponent._cachedSet;
+        if (set) {
+            window.currentRepeatComponent.showRepeatResult({ set: set });
+        }
+        
+        // 따라말하기 복습 완료 → 인터뷰 복습으로 연결
+        var origComplete = window.currentRepeatComponent.completeRepeatResult;
+        window.currentRepeatComponent.completeRepeatResult = function() {
+            console.log('🎤 [V2] 따라말하기 복습 완료 → 인터뷰 복습으로');
+            if (origComplete) origComplete.call(window.currentRepeatComponent);
+            _showInterviewExplainV2();
+        };
+    } else {
+        console.warn('⚠️ [V2] 따라말하기 컴포넌트 없음, 인터뷰 복습으로 이동');
+        _showInterviewExplainV2();
+    }
+}
+
+function _showInterviewExplainV2() {
+    console.log('🎙️ [V2] 인터뷰 복습 시작');
+    
+    document.querySelectorAll('.screen').forEach(function(s) { s.style.display = 'none'; });
+    
+    var interviewScreen = document.getElementById('speakingInterviewResultScreen');
+    if (interviewScreen && window.currentInterviewComponent) {
+        interviewScreen.style.display = 'block';
+        
+        if (typeof window.currentInterviewComponent.showInterviewResult === 'function') {
+            var interviewData = window.currentInterviewComponent.speakingInterviewData;
+            var currentSet = window.currentInterviewComponent.currentInterviewSet || 0;
+            var set = interviewData?.sets?.[currentSet] || interviewData?.sets?.[0];
+            if (set) {
+                window.currentInterviewComponent.showInterviewResult({ set: set });
+            }
+        }
+        
+        // 인터뷰 복습 완료 → 대시보드 복귀 연결
+        setTimeout(function() {
+            var backBtns = interviewScreen.querySelectorAll('.btn-back-to-schedule, [onclick*="backToSchedule"]');
+            backBtns.forEach(function(btn) {
+                btn.onclick = function(e) {
+                    e.preventDefault();
+                    console.log('🏠 [V2] 인터뷰 복습 완료 → 대시보드');
+                    backToStageSelect();
+                };
+            });
+            
+            if (window.currentInterviewComponent) {
+                var origIntComplete = window.currentInterviewComponent.completeInterviewResult;
+                window.currentInterviewComponent.completeInterviewResult = function() {
+                    console.log('🏠 [V2] 인터뷰 복습 완료 → 대시보드');
+                    if (origIntComplete) origIntComplete.call(window.currentInterviewComponent);
+                    backToStageSelect();
+                };
+            }
+        }, 500);
+    } else {
+        console.warn('⚠️ [V2] 인터뷰 컴포넌트 없음, 대시보드로 복귀');
+        backToStageSelect();
     }
 }
 
@@ -774,9 +995,12 @@ function showExplainV2() {
 // ========================================
 window.addEventListener('errorNoteSubmitted', function(e) {
     if (window.StudySave) {
-        var noteText = (e.detail && e.detail.text) || '';
-        StudySave.saveErrorNoteSubmitted(noteText);
-        console.log('📝 [V2] 오답노트 제출 → DB 업데이트 (내용 ' + noteText.length + '자)');
+        var detail = e.detail || {};
+        var noteText = detail.text || '';
+        var speakingFile1 = detail.speakingFile1 || null;
+        var speakingFile2 = detail.speakingFile2 || null;
+        StudySave.saveErrorNoteSubmitted(noteText, speakingFile1, speakingFile2);
+        console.log('📝 [V2] 오답노트 제출 → DB 업데이트 (내용 ' + noteText.length + '자, 녹음파일: ' + (detail.speakingFileCount || 0) + '개)');
     }
 });
 
