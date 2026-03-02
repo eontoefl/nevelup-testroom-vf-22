@@ -102,6 +102,19 @@ const StageSelector = {
     }
 };
 
+/**
+ * 과제 화면으로 복귀하는 공통 함수
+ * 화면 전환 + DB에서 최신 상태 다시 읽기
+ */
+function backToStageSelect() {
+    document.querySelectorAll('.screen').forEach(function(s) { s.style.display = 'none'; });
+    document.querySelectorAll('.result-screen, .test-screen').forEach(function(s) { s.style.display = 'none'; });
+    var screen = document.getElementById('stageSelectScreen');
+    if (screen) screen.style.display = 'block';
+    // DB에서 최신 상태 다시 읽기
+    StageSelector._loadFromDB();
+}
+
 // ========================================
 // 4개 버튼 핸들러
 // ========================================
@@ -178,14 +191,7 @@ function startFirstAttemptV2() {
  */
 function returnToStageSelect(result) {
     console.log('🔙 [V2] 과제 화면으로 복귀');
-    
-    // 모든 화면 숨기고 stageSelectScreen 표시
-    document.querySelectorAll('.screen').forEach(function(s) { s.style.display = 'none'; });
-    // result-screen / test-screen도 숨기기
-    document.querySelectorAll('.result-screen, .test-screen').forEach(function(s) { s.style.display = 'none'; });
-    
-    var screen = document.getElementById('stageSelectScreen');
-    if (screen) screen.style.display = 'block';
+    backToStageSelect();
     
     // 대시보드 업데이트
     if (result) {
@@ -389,25 +395,7 @@ function addReturnButtonToRetakeResult(secondResults) {
  */
 function returnToStageSelectAfterRetake(secondResults) {
     console.log('🔙 [V2] 2차 풀이 후 과제 화면으로 복귀');
-    
-    // 모든 화면 숨기기
-    document.querySelectorAll('.screen').forEach(function(s) { s.style.display = 'none'; });
-    document.querySelectorAll('.result-screen, .test-screen').forEach(function(s) { s.style.display = 'none'; });
-    
-    var screen = document.getElementById('stageSelectScreen');
-    if (screen) screen.style.display = 'block';
-    
-    // 대시보드에 2차 점수 업데이트
-    if (secondResults) {
-        updateStageDashboard(secondResults, '2nd');
-    }
-    
-    // 2차 풀이 상태 업데이트
-    var status2nd = document.getElementById('stage2ndStatus');
-    if (status2nd) {
-        status2nd.textContent = '✅ 완료';
-        status2nd.classList.add('stage-status-done');
-    }
+    backToStageSelect();
 }
 
 function showResultV2() {

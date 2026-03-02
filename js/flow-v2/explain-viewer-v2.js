@@ -468,9 +468,9 @@ function addExplainTabNavigation(screen, activeTab, firstResult, secondResult, s
     var returnBtn = screen.querySelector('.v2-tab-return');
     if (returnBtn) {
         returnBtn.onclick = function() {
-            document.querySelectorAll('.screen, .result-screen, .test-screen').forEach(function(s) { s.style.display = 'none'; });
-            var stageScreen = document.getElementById('stageSelectScreen');
-            if (stageScreen) stageScreen.style.display = 'block';
+            if (typeof backToStageSelect === 'function') {
+                backToStageSelect();
+            }
         };
     }
 }
@@ -483,9 +483,9 @@ function replaceBackButtons(screen) {
 
     screen.querySelectorAll('.btn-back').forEach(function(btn) {
         btn.onclick = function() {
-            document.querySelectorAll('.screen, .result-screen, .test-screen').forEach(function(s) { s.style.display = 'none'; });
-            var stageScreen = document.getElementById('stageSelectScreen');
-            if (stageScreen) stageScreen.style.display = 'block';
+            if (typeof backToStageSelect === 'function') {
+                backToStageSelect();
+            }
         };
         // 텍스트 변경
         var textNode = btn.childNodes[btn.childNodes.length - 1];
@@ -657,9 +657,9 @@ function addListeningExplainTabNav(activePageIndex) {
     var returnBtn = visibleScreen.querySelector('.v2-ltab-return');
     if (returnBtn) {
         returnBtn.onclick = function() {
-            document.querySelectorAll('.screen, .result-screen, .test-screen').forEach(function(s) { s.style.display = 'none'; });
-            var stageScreen = document.getElementById('stageSelectScreen');
-            if (stageScreen) stageScreen.style.display = 'block';
+            if (typeof backToStageSelect === 'function') {
+                backToStageSelect();
+            }
         };
     }
 }
