@@ -137,9 +137,9 @@ const StudySave = (function() {
     }
     
     /**
-     * 오답노트 제출 상태 저장
+     * 오답노트 제출 상태 + 내용 저장
      */
-    async function saveErrorNoteSubmitted() {
+    async function saveErrorNoteSubmitted(noteText) {
         console.log('💾 [StudySave] 오답노트 제출 저장 시작');
         
         const key = _getSessionKey();
@@ -155,10 +155,14 @@ const StudySave = (function() {
         }
         
         try {
-            const result = await supabaseUpdate(TABLE, `id=eq.${existing.id}`, {
+            var updateData = {
                 error_note_submitted: true
-            });
-            console.log('✅ [StudySave] 오답노트 제출 저장 완료');
+            };
+            if (noteText) {
+                updateData.error_note_text = noteText;
+            }
+            const result = await supabaseUpdate(TABLE, `id=eq.${existing.id}`, updateData);
+            console.log('✅ [StudySave] 오답노트 제출 저장 완료' + (noteText ? ' (내용 ' + noteText.length + '자)' : ''));
             return result;
         } catch (e) {
             console.error('❌ [StudySave] 오답노트 저장 실패:', e);

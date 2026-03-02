@@ -428,10 +428,11 @@ function showExplainV2() {
 // ========================================
 // 오답노트 제출 → study_results_v2 업데이트
 // ========================================
-window.addEventListener('errorNoteSubmitted', function() {
+window.addEventListener('errorNoteSubmitted', function(e) {
     if (window.StudySave) {
-        StudySave.saveErrorNoteSubmitted();
-        console.log('📝 [V2] 오답노트 제출 → DB 업데이트');
+        var noteText = (e.detail && e.detail.text) || '';
+        StudySave.saveErrorNoteSubmitted(noteText);
+        console.log('📝 [V2] 오답노트 제출 → DB 업데이트 (내용 ' + noteText.length + '자)');
     }
 });
 
