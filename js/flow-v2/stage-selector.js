@@ -424,6 +424,16 @@ function showExplainV2() {
 }
 
 // ========================================
+// 오답노트 제출 → study_results_v2 업데이트
+// ========================================
+window.addEventListener('errorNoteSubmitted', function() {
+    if (window.StudySave) {
+        StudySave.saveErrorNoteSubmitted();
+        console.log('📝 [V2] 오답노트 제출 → DB 업데이트');
+    }
+});
+
+// ========================================
 // 기존 진입점 함수를 StageSelector로 대체
 // ========================================
 window.startReadingModule = function(moduleNum) {
