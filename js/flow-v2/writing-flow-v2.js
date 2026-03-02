@@ -1030,7 +1030,12 @@ const WritingFlowV2 = {
             email1stText: this.email1stText || '',
             email2ndText: this.email2ndText || '',
             discussion1stText: this.discussion1stText || '',
-            discussion2ndText: this.discussion2ndText || ''
+            discussion2ndText: this.discussion2ndText || '',
+            // ★ 문제 정보 (해설 화면용 — DB에 함께 저장)
+            email1stData: this.email1stData || null,
+            email2ndData: this.email2ndData || null,
+            discussion1stData: this.discussion1stData || null,
+            discussion2ndData: this.discussion2ndData || null
         };
     },
     
