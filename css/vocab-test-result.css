@@ -1,0 +1,323 @@
+/* 내벨업보카 채점 화면 스타일 */
+
+.vocab-result-container {
+    padding: 30px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* 점수 카드 */
+.vocab-score-card {
+    background: linear-gradient(135deg, #9480c5 0%, #b9a8d4 100%);
+    color: white;
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 30px rgba(148, 128, 197, 0.3);
+}
+
+.vocab-score-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    opacity: 0.95;
+}
+
+.vocab-score-percentage {
+    font-size: 72px;
+    font-weight: 800;
+    margin: 20px 0;
+    text-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.vocab-score-stats {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 25px;
+    padding-top: 25px;
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.vocab-stat-item {
+    text-align: center;
+}
+
+.vocab-stat-label {
+    font-size: 14px;
+    opacity: 0.9;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.vocab-stat-value {
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.vocab-stat-correct {
+    color: #77bf7e;
+}
+
+.vocab-stat-wrong {
+    color: #ef4444;
+}
+
+/* 결과 리스트 */
+.vocab-results-list {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.vocab-results-header {
+    font-size: 22px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 3px solid #e8e3f3;
+}
+
+/* 각 결과 아이템 */
+.vocab-result-item {
+    padding: 25px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    border: 2px solid #e8e3f3;
+    transition: all 0.3s ease;
+}
+
+.vocab-result-item.correct {
+    background: #f0fdf4;
+    border-color: #77bf7e;
+}
+
+.vocab-result-item.wrong {
+    background: #fef2f2;
+    border-color: #ef4444;
+}
+
+.vocab-result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.vocab-result-headword {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.vocab-result-icon {
+    font-size: 28px;
+}
+
+.vocab-result-headword-text {
+    font-size: 26px;
+    font-weight: 700;
+    color: #333;
+}
+
+.vocab-result-status {
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.vocab-result-status.correct {
+    background: #77bf7e;
+    color: white;
+}
+
+.vocab-result-status.wrong {
+    background: #ef4444;
+    color: white;
+}
+
+/* 동의어 비교 */
+.vocab-result-synonyms {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.vocab-synonym-comparison {
+    display: grid;
+    grid-template-columns: 100px 1fr 1fr;
+    gap: 15px;
+    align-items: start;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+}
+
+.vocab-result-item.correct .vocab-synonym-comparison {
+    background: rgba(119, 191, 126, 0.05);
+}
+
+.vocab-result-item.wrong .vocab-synonym-comparison {
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.vocab-synonym-number {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+}
+
+.vocab-your-answer,
+.vocab-correct-answer {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+.vocab-your-answer {
+    background: #f3f4f6;
+    border-left: 3px solid #9ca3af;
+}
+
+.vocab-your-answer-label {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.vocab-your-answer-text {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.vocab-your-answer-text.correct {
+    color: #77bf7e;
+}
+
+.vocab-your-answer-text.wrong {
+    color: #ef4444;
+    text-decoration: line-through;
+}
+
+.vocab-your-answer-text.empty {
+    color: #999;
+    font-style: italic;
+}
+
+.vocab-correct-answer {
+    background: #e8f5e9;
+    border-left: 3px solid #77bf7e;
+}
+
+.vocab-correct-answer-label {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.vocab-correct-answer-text {
+    font-size: 18px;
+    font-weight: 700;
+    color: #77bf7e;
+}
+
+/* 다시 시도하기 버튼 */
+.vocab-result-actions {
+    text-align: center;
+    margin-top: 40px;
+    padding: 20px;
+}
+
+.btn-retry-vocab-test {
+    background: linear-gradient(135deg, #9480c5 0%, #b9a8d4 100%);
+    color: white;
+    border: none;
+    padding: 16px 50px;
+    font-size: 18px;
+    font-weight: 600;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(148, 128, 197, 0.3);
+    margin-right: 15px;
+}
+
+.btn-retry-vocab-test:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(148, 128, 197, 0.4);
+}
+
+.btn-back-to-schedule-result {
+    background: #f3f4f6;
+    color: #333;
+    border: 2px solid #ddd;
+    padding: 16px 50px;
+    font-size: 18px;
+    font-weight: 600;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-back-to-schedule-result:hover {
+    background: #e5e7eb;
+    border-color: #bbb;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .vocab-result-container {
+        padding: 15px;
+    }
+    
+    .vocab-score-card {
+        padding: 25px;
+    }
+    
+    .vocab-score-percentage {
+        font-size: 56px;
+    }
+    
+    .vocab-score-stats {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .vocab-results-list {
+        padding: 20px;
+    }
+    
+    .vocab-synonym-comparison {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .vocab-result-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .vocab-result-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .btn-retry-vocab-test,
+    .btn-back-to-schedule-result {
+        width: 100%;
+        margin: 0;
+    }
+}

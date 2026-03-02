@@ -1,0 +1,261 @@
+/* 내벨업보카 결과 화면 - 미니멀 & 컴팩트 */
+
+.vocab-result-screen {
+    padding: 40px 20px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* 점수 카드 - 심플하고 컴팩트하게 */
+.vocab-score-card {
+    background: white;
+    padding: 30px;
+    margin-bottom: 30px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.vocab-score-title {
+    font-size: 18px;
+    color: #4a5568;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.vocab-score-percentage {
+    font-size: 48px;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 20px;
+}
+
+.vocab-score-stats {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+}
+
+.vocab-stat-item {
+    text-align: center;
+}
+
+.vocab-stat-label {
+    font-size: 12px;
+    color: #a0aec0;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.vocab-stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #2d3748;
+}
+
+.vocab-stat-correct {
+    color: #48bb78;
+}
+
+.vocab-stat-wrong {
+    color: #f56565;
+}
+
+/* 결과 리스트 - 컴팩트하게 */
+.vocab-results-list {
+    background: white;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.vocab-results-header {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+/* 개별 결과 - 한 줄로 컴팩트하게 */
+.vocab-result-item {
+    padding: 15px 0;
+    border-bottom: 1px solid #f7fafc;
+}
+
+.vocab-result-item:last-child {
+    border-bottom: none;
+}
+
+.vocab-result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.vocab-result-headword {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vocab-result-icon {
+    font-size: 18px;
+}
+
+.vocab-result-headword-text {
+    font-size: 20px;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.vocab-result-status {
+    font-size: 14px;
+    font-weight: 600;
+    padding: 4px 12px;
+}
+
+.vocab-result-status.correct {
+    color: #48bb78;
+}
+
+.vocab-result-status.wrong {
+    color: #f56565;
+}
+
+/* 동의어 비교 - 인라인으로 컴팩트하게 */
+.vocab-result-synonyms {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-left: 28px;
+}
+
+.vocab-synonym-comparison {
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr;
+    gap: 15px;
+    align-items: center;
+    font-size: 14px;
+}
+
+.vocab-synonym-number {
+    color: #a0aec0;
+    font-weight: 500;
+}
+
+.vocab-your-answer,
+.vocab-correct-answer {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.vocab-your-answer-label,
+.vocab-correct-answer-label {
+    font-size: 12px;
+    color: #a0aec0;
+    min-width: 50px;
+}
+
+.vocab-your-answer-text,
+.vocab-correct-answer-text {
+    font-weight: 500;
+    padding: 4px 8px;
+    background: #f7fafc;
+}
+
+.vocab-your-answer-text.correct {
+    color: #48bb78;
+    background: #f0fff4;
+}
+
+.vocab-your-answer-text.wrong {
+    color: #f56565;
+    background: #fff5f5;
+    text-decoration: line-through;
+}
+
+.vocab-your-answer-text.empty {
+    color: #a0aec0;
+    font-style: italic;
+}
+
+.vocab-correct-answer-text {
+    color: #2d3748;
+    background: #edf2f7;
+}
+
+/* 버튼 영역 */
+.vocab-result-actions {
+    margin-top: 30px;
+    text-align: center;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.vocab-result-actions button {
+    padding: 14px 35px;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.vocab-result-actions button:hover {
+    transform: translateY(-2px);
+}
+
+.btn-restart-vocab {
+    background: #667eea;
+    color: white;
+}
+
+.btn-restart-vocab:hover {
+    background: #5a67d8;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-back-schedule {
+    background: #e2e8f0;
+    color: #4a5568;
+}
+
+.btn-back-schedule:hover {
+    background: #cbd5e0;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .vocab-score-percentage {
+        font-size: 40px;
+    }
+    
+    .vocab-score-stats {
+        gap: 20px;
+    }
+    
+    .vocab-stat-value {
+        font-size: 20px;
+    }
+    
+    .vocab-result-headword-text {
+        font-size: 18px;
+    }
+    
+    .vocab-synonym-comparison {
+        grid-template-columns: 1fr;
+        gap: 5px;
+    }
+    
+    .vocab-result-actions {
+        flex-direction: column;
+    }
+    
+    .vocab-result-actions button {
+        width: 100%;
+    }
+}

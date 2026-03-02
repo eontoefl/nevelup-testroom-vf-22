@@ -1,0 +1,289 @@
+/* 내벨업보카 시험 - 완전 재설계 (컴팩트 & 중앙정렬) */
+
+/* === 인트로 화면 === */
+.vocab-intro {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+    padding: 30px 20px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.vocab-intro-content {
+    max-width: 550px;
+    width: 100%;
+    text-align: center;
+    background: white;
+    padding: 40px 35px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+.intro-week-day {
+    font-size: 14px;
+    color: #667eea;
+    font-weight: 600;
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.intro-page-info {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 25px;
+}
+
+.vocab-intro-icon {
+    font-size: 50px;
+    margin-bottom: 15px;
+}
+
+.vocab-intro-content h2 {
+    font-size: 28px;
+    color: #2d3748;
+    margin-bottom: 25px;
+    font-weight: 700;
+}
+
+/* 설명 박스 - 중앙 정렬! */
+.vocab-intro-description {
+    text-align: center;
+    background: #f7fafc;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.vocab-intro-description p {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #4a5568;
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.vocab-intro-description strong {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.vocab-intro-description ul {
+    margin: 12px 0;
+    padding-left: 0;
+    list-style: none;
+    text-align: center;
+}
+
+.vocab-intro-description li {
+    font-size: 13px;
+    line-height: 1.9;
+    color: #4a5568;
+    margin-bottom: 6px;
+    text-align: center;
+}
+
+.vocab-intro-description li::before {
+    content: '•';
+    color: #667eea;
+    font-weight: bold;
+    margin-right: 6px;
+}
+
+.btn-start-vocab-test {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 14px 35px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-start-vocab-test:hover {
+    background: #5a67d8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* === 시험 메인 화면 === */
+.vocab-main {
+    padding: 30px 20px;
+    max-width: 950px;
+    margin: 0 auto;
+}
+
+/* 진행 상태 바 - 더 눈에 띄게 */
+.vocab-progress {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 16px 25px;
+    margin-bottom: 25px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    animation: pageChange 0.5s ease;
+}
+
+@keyframes pageChange {
+    0% {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    50% {
+        transform: translateY(10px);
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.vocab-progress-text {
+    font-size: 16px;
+    color: white;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.vocab-container {
+    display: grid;
+    gap: 15px;
+}
+
+/* 문제 카드 - 컴팩트하게 */
+.vocab-item {
+    background: white;
+    padding: 20px 25px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 30px;
+    align-items: center;
+}
+
+.vocab-item:hover {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* 표제어 영역 */
+.vocab-headword {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.vocab-headword-label {
+    font-size: 11px;
+    color: #a0aec0;
+    font-weight: 500;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.vocab-headword-text {
+    font-size: 22px;
+    font-weight: 700;
+    color: #2d3748;
+    word-break: break-word;
+}
+
+/* 동의어 입력 영역 */
+.vocab-synonyms {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 12px;
+}
+
+.vocab-synonym-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.vocab-synonym-label {
+    font-size: 13px;
+    color: #718096;
+    font-weight: 500;
+    min-width: 60px;
+}
+
+.vocab-synonym-input {
+    flex: 1;
+    padding: 10px 14px;
+    font-size: 15px;
+    border: 2px solid #e2e8f0;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.vocab-synonym-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.vocab-synonym-input::placeholder {
+    color: #cbd5e0;
+}
+
+/* 제출 버튼 */
+.vocab-submit-section {
+    margin-top: 30px;
+    text-align: center;
+    padding: 25px 0;
+}
+
+.vocab-submit-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 14px 45px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+}
+
+.vocab-submit-btn:hover {
+    background: #5a67d8;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .vocab-intro-content {
+        padding: 35px 25px;
+    }
+    
+    .vocab-intro-content h2 {
+        font-size: 24px;
+    }
+    
+    .vocab-item {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        padding: 18px 20px;
+    }
+    
+    .vocab-headword-text {
+        font-size: 20px;
+    }
+    
+    .vocab-synonym-input-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+    }
+    
+    .vocab-synonym-label {
+        text-align: left;
+        min-width: auto;
+    }
+}
