@@ -206,7 +206,8 @@ const StudySave = (function() {
         return {
             firstResult: existing.first_result_json ? JSON.parse(existing.first_result_json) : null,
             secondResult: existing.second_result_json ? JSON.parse(existing.second_result_json) : null,
-            errorNoteSubmitted: existing.error_note_submitted || false
+            errorNoteSubmitted: existing.error_note_submitted || false,
+            errorNoteText: existing.error_note_text || null
         };
     }
     
