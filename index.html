@@ -637,22 +637,39 @@
                         <div style="width:4px; height:20px; background:#7C5CBF; border-radius:2px;"></div>
                         <h3 style="font-size:16px; font-weight:700; color:var(--text-primary); margin:0;">해설</h3>
                     </div>
-                    <button id="stageBtnExplain" onclick="showExplainV2()" style="
-                        width:100%; padding:20px 16px; 
-                        background:var(--bg-color); color:var(--text-primary); 
-                        border:2px solid var(--border-color); border-radius:12px; 
-                        cursor:pointer; font-size:14px; font-weight:600;
-                        display:flex; align-items:center; gap:16px;
-                        transition: all 0.2s;
-                    ">
-                        <div style="width:48px; height:48px; background:#F5F3FF; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                            <span style="font-size:22px;">📖</span>
-                        </div>
-                        <div style="text-align:left;">
-                            <div>해설 보기</div>
-                            <div id="stageExplainStatus" style="font-size:11px; color:var(--text-secondary); font-weight:400; margin-top:2px;">풀이 완료 후 확인 가능</div>
-                        </div>
-                    </button>
+                    <div style="display:flex; gap:14px;">
+                        <!-- 해설 보기 -->
+                        <button id="stageBtnExplain" onclick="showExplainV2()" style="
+                            flex:1; padding:20px 16px; 
+                            background:var(--bg-color); color:var(--text-primary); 
+                            border:2px solid var(--border-color); border-radius:12px; 
+                            cursor:pointer; font-size:14px; font-weight:600;
+                            display:flex; flex-direction:column; align-items:center; gap:10px;
+                            transition: all 0.2s;
+                        ">
+                            <div style="width:48px; height:48px; background:#F5F3FF; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <span style="font-size:22px;">📖</span>
+                            </div>
+                            <span>해설 보기</span>
+                            <span id="stageExplainStatus" style="font-size:11px; color:var(--text-secondary); font-weight:400;">풀이 완료 후 확인 가능</span>
+                        </button>
+
+                        <!-- 오답노트 보기 -->
+                        <button id="stageBtnErrorNote" onclick="showErrorNoteV2()" style="
+                            flex:1; padding:20px 16px; 
+                            background:var(--bg-color); color:var(--text-primary); 
+                            border:2px solid var(--border-color); border-radius:12px; 
+                            cursor:pointer; font-size:14px; font-weight:600;
+                            display:flex; flex-direction:column; align-items:center; gap:10px;
+                            transition: all 0.2s;
+                        ">
+                            <div style="width:48px; height:48px; background:#FFF7ED; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <span style="font-size:22px;">📝</span>
+                            </div>
+                            <span>오답노트 보기</span>
+                            <span id="stageErrorNoteStatus" style="font-size:11px; color:var(--text-secondary); font-weight:400;">제출 후 확인 가능</span>
+                        </button>
+                    </div>
                 </div>
 
             </div>
