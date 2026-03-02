@@ -166,7 +166,7 @@ function startFirstAttemptV2() {
             // WritingFlowV2 결과를 StageSelector에 보관
             StageSelector.firstAttemptResult = { sectionType: 'writing', writingResult: writingResult };
             
-            // Supabase 저장
+            // Supabase 저장 (비동기, 기다리지 않음)
             if (window.StudySave) {
                 StudySave.saveFirstResult(StageSelector.firstAttemptResult);
             }
