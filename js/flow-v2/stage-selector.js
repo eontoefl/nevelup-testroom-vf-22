@@ -17,89 +17,74 @@ const StageSelector = {
      * 단계 선택 화면 표시
      * task-router.js에서 호출됨
      */
-    show(sectionType, moduleNumber) {
-        console.log(`🎯 [StageSelector] ${sectionType} Module ${moduleNumber} 단계 선택 화면`);
-        
+    async show(sectionType, moduleNumber) {
+        // 1. 메모리 초기화
         this.sectionType = sectionType;
         this.moduleNumber = moduleNumber;
         this.firstAttemptResult = null;
         this.secondAttemptResult = null;
 
-        // 섹션 한글명 매핑
-        const sectionLabel = {
-            'reading': '리딩',
-            'listening': '리스닝',
-            'writing': '라이팅',
-            'speaking': '스피킹'
-        }[sectionType] || sectionType;
+        // 2. UI 초기화 (화면을 빈 상태로 리셋)
+        this._resetUI(sectionType, moduleNumber);
 
-        const title = `${sectionLabel} 모듈 ${moduleNumber}`;
+        // 3. DB에서 해당 모듈 데이터 읽기 → 있으면 채우기
+        await this._loadFromDB();
 
-        // 제목 업데이트
-        const titleEl = document.getElementById('stageSelectTitle');
-        if (titleEl) titleEl.textContent = title;
-
-        const moduleTitleEl = document.getElementById('stageModuleTitle');
-        if (moduleTitleEl) moduleTitleEl.textContent = title;
-
-        // 모든 화면 숨기고 stageSelectScreen만 표시
-        document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
-        const screen = document.getElementById('stageSelectScreen');
-        if (screen) screen.style.display = 'block';
-
-        console.log(`✅ [StageSelector] 화면 표시 완료: ${title}`);
-
-        // ✅ DB에서 기존 결과 불러와서 UI 복원
-        this._restoreFromDB();
+        console.log(`✅ [StageSelector] ${sectionType} Module ${moduleNumber} 준비 완료`);
     },
 
-    /**
-     * DB에서 기존 결과 불러와서 UI 복원
-     * 새로고침 후에도 대시보드 점수, 완료 상태 표시
-     */
-    async _restoreFromDB() {
-        if (!window.StudySave) {
-            console.log('⚠️ [StageSelector] StudySave 미로드 — 복원 생략');
-            return;
-        }
+    _resetUI(sectionType, moduleNumber) {
+        // 제목
+        var sectionLabel = { 'reading': '리딩', 'listening': '리스닝', 'writing': '라이팅', 'speaking': '스피킹' }[sectionType] || sectionType;
+        var title = sectionLabel + ' 모듈 ' + moduleNumber;
 
-        console.log('🔄 [StageSelector] DB에서 기존 결과 복원 시도...');
+        var titleEl = document.getElementById('stageSelectTitle');
+        if (titleEl) titleEl.textContent = title;
+        var moduleTitleEl = document.getElementById('stageModuleTitle');
+        if (moduleTitleEl) moduleTitleEl.textContent = title;
 
-        const saved = await StudySave.loadSavedResults();
-        if (!saved) {
-            console.log('📭 [StageSelector] 저장된 결과 없음 — 첫 풀이');
-            return;
-        }
+        // 화면 전환
+        document.querySelectorAll('.screen').forEach(function(s) { s.style.display = 'none'; });
+        var screen = document.getElementById('stageSelectScreen');
+        if (screen) screen.style.display = 'block';
 
-        // 1차 결과 복원
+        // 대시보드 점수/레벨 비우기
+        ['1st', '2nd'].forEach(function(suffix) {
+            var scoreEl = document.getElementById('stageScore' + suffix);
+            if (scoreEl) scoreEl.innerHTML = '-';
+            var levelEl = document.getElementById('stageLevel' + suffix);
+            if (levelEl) levelEl.textContent = '-';
+            var detailEl = document.getElementById('stageDetail' + suffix);
+            if (detailEl) detailEl.innerHTML = '';
+        });
+
+        // 완료 상태 비우기
+        var status1st = document.getElementById('stage1stStatus');
+        if (status1st) { status1st.textContent = '미완료'; status1st.classList.remove('stage-status-done'); }
+        var status2nd = document.getElementById('stage2ndStatus');
+        if (status2nd) { status2nd.textContent = '미완료'; status2nd.classList.remove('stage-status-done'); }
+    },
+
+    async _loadFromDB() {
+        if (!window.StudySave) return;
+
+        var saved = await StudySave.loadSavedResults();
+        if (!saved) return;
+
+        // 1차 결과
         if (saved.firstResult) {
             this.firstAttemptResult = saved.firstResult;
             updateStageDashboard(saved.firstResult, '1st');
-
             var status1st = document.getElementById('stage1stStatus');
-            if (status1st) {
-                status1st.textContent = '✅ 완료';
-                status1st.classList.add('stage-status-done');
-            }
-            console.log('✅ [StageSelector] 1차 결과 복원 완료');
+            if (status1st) { status1st.textContent = '✅ 완료'; status1st.classList.add('stage-status-done'); }
         }
 
-        // 2차 결과 복원
+        // 2차 결과
         if (saved.secondResult) {
             this.secondAttemptResult = saved.secondResult;
             updateStageDashboard(saved.secondResult, '2nd');
-
             var status2nd = document.getElementById('stage2ndStatus');
-            if (status2nd) {
-                status2nd.textContent = '✅ 완료';
-                status2nd.classList.add('stage-status-done');
-            }
-            console.log('✅ [StageSelector] 2차 결과 복원 완료');
-        }
-
-        // 오답노트 제출 상태 복원
-        if (saved.errorNoteSubmitted) {
-            console.log('✅ [StageSelector] 오답노트 제출 상태 복원 완료');
+            if (status2nd) { status2nd.textContent = '✅ 완료'; status2nd.classList.add('stage-status-done'); }
         }
     }
 };
