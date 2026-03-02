@@ -167,14 +167,23 @@ function renderMotivationMessage(resultData) {
  * 네비게이션 영역 — "과제 화면으로 돌아가기" 버튼만 표시
  */
 function renderRetakeNavigation() {
-    var navArea = document.querySelector('#readingRetakeResultScreen .retake-navigation');
-    if (!navArea) return;
+    var screen = document.getElementById('readingRetakeResultScreen');
+    if (!screen) return;
+
+    // 기존 네비게이션 영역이 있으면 사용, 없으면 새로 생성
+    var navArea = screen.querySelector('.retake-navigation');
+    if (!navArea) {
+        navArea = document.createElement('div');
+        navArea.className = 'retake-navigation';
+        navArea.style.cssText = 'padding:20px; text-align:center;';
+        screen.appendChild(navArea);
+    }
 
     navArea.innerHTML = '';
 
     var returnBtn = document.createElement('button');
-    returnBtn.className = 'btn btn-primary btn-large';
-    returnBtn.style.cssText = 'width:100%; padding:14px 24px; font-size:16px; font-weight:600; border-radius:12px; cursor:pointer;';
+    returnBtn.className = 'btn btn-primary btn-large v2-return-btn';
+    returnBtn.style.cssText = 'width:90%; max-width:400px; padding:14px 24px; font-size:16px; font-weight:600; border-radius:12px; cursor:pointer; background:#9480c5; color:#fff; border:none;';
     returnBtn.textContent = '📋 과제 화면으로 돌아가기';
     returnBtn.onclick = function() {
         if (typeof returnToStageSelectAfterRetake === 'function') {
@@ -187,6 +196,8 @@ function renderRetakeNavigation() {
         }
     };
     navArea.appendChild(returnBtn);
+    
+    console.log('✅ [V2] "과제 화면으로 돌아가기" 버튼 렌더링 완료');
 }
 
 // 전역 노출
