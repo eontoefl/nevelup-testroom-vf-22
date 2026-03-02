@@ -76,6 +76,7 @@ const FlowController = {
             return 'writing_mixed';
         }
         
+        // speaking은 V2에서 stage-selector.js가 처리 (FlowController 미사용)
         if (this.sectionType === 'speaking') {
             return 'speak';
         }
@@ -241,6 +242,7 @@ const FlowController = {
                     btn: '시작하기',
                     theme: 'theme-purple'
                 };
+            // speaking 가이드 팝업은 V2 stage-selector.js에서 처리
             } else if (this.sectionType === 'speaking') {
                 guideConfig = {
                     icon: '🎤',
@@ -304,18 +306,8 @@ const FlowController = {
                 break;
                 
             case 'speak':
-                // 스피킹: 결과 없이 바로 2차 답변 (가이드 팝업 후)
-                console.log('🔄 [FlowController] speak 플로우 → 2차 안내 팝업 후 시작');
-                if (typeof showGuidePopup === 'function' && !window._isReplayMode && !window._isPracticeMode) {
-                    await showGuidePopup({
-                        icon: '🔄',
-                        title: '2차 답변을 시작합니다',
-                        desc: '1차에서 답변한 내용을 다시 한번 답변해보세요.<br>1차와 <b>완벽하게 동일한</b> 화면이 나옵니다.',
-                        notice: '자신의 <b>휴대폰 녹음기</b>를 준비해주세요.',
-                        btn: '시작하기',
-                        theme: 'theme-blue'
-                    });
-                }
+                // V2에서는 stage-selector.js가 스피킹을 처리하므로 여기 도달하지 않음
+                console.log('⚠️ [FlowController] speak 플로우 → V2에서는 stage-selector.js 사용');
                 this.startSecondAttempt();
                 break;
                 
@@ -507,10 +499,7 @@ const FlowController = {
             console.log('⏰ [FlowController] 라이팅 2차: 시간제한 해제');
         }
         
-        // 스피킹: 2차는 1차와 완전히 동일
-        if (this.sectionType === 'speaking') {
-            console.log('🎤 [FlowController] 스피킹 2차: 1차와 동일한 화면');
-        }
+        // 스피킹 2차: V2에서는 stage-selector.js가 처리
         
         // 전역으로 현재 차수 표시 (컴포넌트에서 참조 가능)
         window.currentAttemptNumber = 2;
@@ -628,9 +617,9 @@ const FlowController = {
                 this.showCompletionScreen();
             }
         } else if (this.sectionType === 'speaking') {
-            // 스피킹: 따라말하기 복습 → 인터뷰 복습 순서로 표시
-            console.log('🎤 [FlowController] 스피킹 해설 화면 시작');
-            this.showSpeakingExplain();
+            // V2에서는 stage-selector.js가 스피킹 해설을 처리
+            console.log('⚠️ [FlowController] 스피킹 해설 → V2에서는 stage-selector.js 사용');
+            this.showCompletionScreen();
         } else if (this.sectionType === 'writing') {
             // 라이팅: arrange 해설 → email 해설 → discussion 해설
             console.log('✏️ [FlowController] 라이팅 해설 화면 시작');
@@ -641,105 +630,9 @@ const FlowController = {
     },
     
     // ========================================
-    // 스피킹 해설 화면 (따라말하기 복습 → 인터뷰 복습)
+    // 스피킹 해설: V2에서는 stage-selector.js가 처리
+    // showSpeakingExplain(), showInterviewExplain() 제거됨
     // ========================================
-    showSpeakingExplain() {
-        console.log('🎤 [FlowController] 스피킹 해설: 따라말하기 복습 시작');
-        
-        // 모든 화면 숨기기
-        document.querySelectorAll('.screen').forEach(screen => {
-            screen.style.display = 'none';
-        });
-        
-        // 1. 따라말하기 복습 화면 표시
-        const repeatResultScreen = document.getElementById('speakingRepeatResultScreen');
-        if (repeatResultScreen && window.currentRepeatComponent) {
-            repeatResultScreen.style.display = 'block';
-            
-            // RepeatComponent의 showRepeatResult 호출
-            const repeatSetIndex = (window.currentRepeatComponent.setId || 1) - 1;
-            const set = window.currentRepeatComponent.speakingRepeatData?.sets?.[repeatSetIndex] || window.currentRepeatComponent._cachedSet;
-            if (set) {
-                window.currentRepeatComponent.showRepeatResult({ set: set });
-            }
-            
-            // ★ 따라말하기 복습의 "완료" 버튼을 인터뷰 복습으로 연결
-            const originalCompleteRepeatResult = window.currentRepeatComponent.completeRepeatResult.bind(window.currentRepeatComponent);
-            window.currentRepeatComponent.completeRepeatResult = () => {
-                console.log('🎤 [FlowController] 따라말하기 복습 완료 → 인터뷰 복습으로');
-                originalCompleteRepeatResult();
-                this.showInterviewExplain();
-            };
-        } else {
-            // 따라말하기 컴포넌트가 없으면 바로 인터뷰 복습으로
-            console.warn('⚠️ [FlowController] 따라말하기 컴포넌트 없음, 인터뷰 복습으로 이동');
-            this.showInterviewExplain();
-        }
-    },
-    
-    // ========================================
-    // 인터뷰 해설 화면
-    // ========================================
-    showInterviewExplain() {
-        console.log('🎙️ [FlowController] 인터뷰 복습 시작');
-        
-        // 모든 화면 숨기기
-        document.querySelectorAll('.screen').forEach(screen => {
-            screen.style.display = 'none';
-        });
-        
-        // 인터뷰 복습 화면 표시
-        const interviewResultScreen = document.getElementById('speakingInterviewResultScreen');
-        if (interviewResultScreen && window.currentInterviewComponent) {
-            interviewResultScreen.style.display = 'block';
-            
-            // InterviewComponent의 showInterviewResult 호출
-            if (typeof window.currentInterviewComponent.showInterviewResult === 'function') {
-                // 인터뷰 데이터에서 현재 세트 가져오기
-                const interviewData = window.currentInterviewComponent.speakingInterviewData;
-                const currentSet = window.currentInterviewComponent.currentInterviewSet || 0;
-                const set = interviewData?.sets?.[currentSet];
-                
-                if (set) {
-                    window.currentInterviewComponent.showInterviewResult({ set: set });
-                } else {
-                    console.warn('⚠️ [FlowController] 인터뷰 세트 데이터 없음');
-                    window.currentInterviewComponent.showInterviewResult({ set: interviewData?.sets?.[0] });
-                }
-            } else if (typeof window.currentInterviewComponent.renderInterviewResult === 'function') {
-                window.currentInterviewComponent.renderInterviewResult();
-            }
-            
-            // ★ 인터뷰 복습의 "완료"/"학습 일정" 버튼을 FlowController.finish()로 연결
-            setTimeout(() => {
-                // 결과 화면의 backToSchedule 버튼을 FlowController로 연결
-                const backBtns = interviewResultScreen.querySelectorAll(
-                    '.btn-back-to-schedule, [onclick*="backToSchedule"]'
-                );
-                backBtns.forEach(btn => {
-                    btn.onclick = (e) => {
-                        e.preventDefault();
-                        console.log('🏠 [FlowController] 인터뷰 복습 완료 → 스케줄로');
-                        this.finish();
-                    };
-                });
-                
-                // completeInterviewResult 함수도 연결
-                if (window.currentInterviewComponent) {
-                    const originalComplete = window.currentInterviewComponent.completeInterviewResult;
-                    window.currentInterviewComponent.completeInterviewResult = () => {
-                        console.log('🏠 [FlowController] 인터뷰 복습 완료 → 스케줄로');
-                        if (originalComplete) originalComplete.call(window.currentInterviewComponent);
-                        this.finish();
-                    };
-                }
-            }, 500);
-        } else {
-            // 인터뷰 컴포넌트가 없으면 완료 화면
-            console.warn('⚠️ [FlowController] 인터뷰 컴포넌트 없음, 완료 화면 표시');
-            this.showCompletionScreen();
-        }
-    },
     
     // ========================================
     // 라이팅 해설 화면 (arrange해설 → email해설 → discussion해설)

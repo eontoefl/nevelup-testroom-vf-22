@@ -681,7 +681,9 @@ var ErrorNote = {
                     isFraud: isFraud,
                     sectionType: this._sectionType,
                     moduleNumber: this._moduleNumber,
-                    speakingFileCount: speakingFileCount
+                    speakingFileCount: speakingFileCount,
+                    speakingFile1: file1Path || null,
+                    speakingFile2: file2Path || null
                 }
             });
             window.dispatchEvent(event);

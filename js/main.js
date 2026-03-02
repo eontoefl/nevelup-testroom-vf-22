@@ -613,23 +613,18 @@ function startSection(section) {
             console.log('Writing Discussion 섹션 시작');
             initWritingDiscussion();
             break;
+        // V1 speaking_repeat / speaking_interview: V2에서는 stage-selector.js + ModuleController가 처리
         case 'speaking_repeat':
-            console.log('=== SPEAKING REPEAT 진단 시작 ===');
-            console.log('1. initSpeakingRepeat 타입:', typeof initSpeakingRepeat);
-            console.log('2. window.initSpeakingRepeat 타입:', typeof window.initSpeakingRepeat);
-            console.log('3. 전역 함수 목록:', Object.keys(window).filter(k => k.includes('Speaking') || k.includes('Repeat')));
-            console.log('=== 진단 끝 ===');
-            
+            console.log('⚠️ [V1] speaking_repeat → V2에서는 stage-selector.js 사용');
             if (typeof initSpeakingRepeat === 'function') {
                 initSpeakingRepeat();
-            } else {
-                console.error('❌ initSpeakingRepeat 함수를 찾을 수 없습니다!');
-                alert('스피킹 따라말하기 초기화 함수를 찾을 수 없습니다. 페이지를 새로고침해주세요.');
             }
             break;
         case 'speaking_interview':
-            console.log('Speaking Interview 섹션 시작');
-            initSpeakingInterview();
+            console.log('⚠️ [V1] speaking_interview → V2에서는 stage-selector.js 사용');
+            if (typeof initSpeakingInterview === 'function') {
+                initSpeakingInterview();
+            }
             break;
         case 'vocab_test':
             console.log('내벨업보카 시험 섹션 시작');
@@ -648,8 +643,9 @@ function startSection(section) {
             console.log('Listening 섹션 시작');
             initListeningSection();
             break;
+        // V1 speaking: V2에서는 stage-selector.js가 처리
         case 'speaking':
-            console.log('Speaking 섹션 시작');
+            console.log('⚠️ [V1] Speaking 섹션 → V2에서는 stage-selector.js 사용');
             initSpeakingSection();
             break;
         case 'writing':
