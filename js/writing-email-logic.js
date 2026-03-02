@@ -136,22 +136,9 @@ function submitWritingEmail() {
     }
     
     // 컴포넌트의 submit() 호출
-    const resultData = window.currentEmailComponent.submit();
-    
-    // ★ ModuleController에 완료 알림 (FlowController 플로우용)
-    // onComplete 또는 onSubmitComplete 콜백이 있으면 호출
-    const callback = window.currentEmailComponent.onComplete || window.currentEmailComponent.onSubmitComplete;
-    if (callback && typeof callback === 'function') {
-        console.log('📤 [Email] onComplete 콜백 호출');
-        callback(resultData);
-    } else {
-        // 기존 방식 (독립 실행 시)
-        console.log('📤 [Email] 기존 방식 - 결과 화면 직접 표시');
-        showScreen('writingEmailResultScreen');
-        if (window.currentEmailComponent.showEmailResult) {
-            window.currentEmailComponent.showEmailResult(resultData);
-        }
-    }
+    // ★ submit() 내부에서 this.onComplete(resultData)를 호출하므로
+    //    여기서 콜백을 중복 호출하지 않음 (V2 이중 신호 제거)
+    window.currentEmailComponent.submit();
 }
 
 /**
