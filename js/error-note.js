@@ -615,24 +615,34 @@ var ErrorNote = {
         // ★ DB 저장 시도 (폴백 포함)
         var saveSuccess = false;
 
-        // 방법 1: AuthMonitor._studyRecordId로 UPDATE
-        if (window.AuthMonitor && AuthMonitor._studyRecordId) {
-            saveSuccess = await AuthMonitor.saveErrorNote(text, wordCount, file1Path, file2Path);
-            if (saveSuccess) {
-                console.log('📝 [ErrorNote] DB 저장 완료 (AuthMonitor)');
-            } else {
-                console.warn('📝 [ErrorNote] AuthMonitor 저장 실패 — 폴백 시도');
+        // V2: study_results_v2 테이블에 저장 (이벤트로 처리)
+        // 기존 방법 1, 2, 3은 건너뛰고 이벤트만 발생시킴
+        if (window.StudySave) {
+            saveSuccess = true;
+            console.log('📝 [ErrorNote] V2 모드 — 기존 저장 건너뜀, 이벤트로 처리');
+        }
+
+        // 기존 버전: AuthMonitor / 폴백 / 비상 저장
+        if (!saveSuccess) {
+            // 방법 1: AuthMonitor._studyRecordId로 UPDATE
+            if (window.AuthMonitor && AuthMonitor._studyRecordId) {
+                saveSuccess = await AuthMonitor.saveErrorNote(text, wordCount, file1Path, file2Path);
+                if (saveSuccess) {
+                    console.log('📝 [ErrorNote] DB 저장 완료 (AuthMonitor)');
+                } else {
+                    console.warn('📝 [ErrorNote] AuthMonitor 저장 실패 — 폴백 시도');
+                }
             }
-        }
 
-        // 방법 2: 폴백 — studyRecordId 없으면 직접 최신 study_record 찾아서 UPDATE
-        if (!saveSuccess) {
-            saveSuccess = await this._fallbackSave(text, wordCount, file1Path, file2Path);
-        }
+            // 방법 2: 폴백 — studyRecordId 없으면 직접 최신 study_record 찾아서 UPDATE
+            if (!saveSuccess) {
+                saveSuccess = await this._fallbackSave(text, wordCount, file1Path, file2Path);
+            }
 
-        // 방법 3: 최종 폴백 — 새 study_record INSERT 후 오답노트 저장
-        if (!saveSuccess) {
-            saveSuccess = await this._emergencySave(text, wordCount, file1Path, file2Path);
+            // 방법 3: 최종 폴백 — 새 study_record INSERT 후 오답노트 저장
+            if (!saveSuccess) {
+                saveSuccess = await this._emergencySave(text, wordCount, file1Path, file2Path);
+            }
         }
 
         // UI 최종 업데이트
