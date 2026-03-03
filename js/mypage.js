@@ -576,28 +576,34 @@ function renderGrass() {
     const programType = mpUser.programType || 'standard';
     const gridId = programType === 'fast' ? 'grass-fast' : 'grass-standard';
 
-    // ★ 시작 전이어도 과제를 풀었으면 잔디에 표시
+    // ★ V2 데이터 기반 인증률 맵 (level 0~3)
     const completedMap = buildCompletedMap();
-    const currentDay = isBeforeStart() ? 0 : getCurrentScheduleDay(); // 시작 전이면 fail 처리 안 함
+    const currentDay = isBeforeStart() ? 0 : getCurrentScheduleDay();
 
     // ★ 데드라인 연장된 dayNum 목록 계산
     const extendedDayNums = buildExtendedDayNums();
 
+    const levelClasses = ['', 'level-1', 'level-2', 'level-3'];
+
     document.querySelectorAll(`#${gridId} .g`).forEach(cell => {
         const dayNum = parseInt(cell.dataset.day);
         const order = parseInt(cell.dataset.order);
+        const key = `${dayNum}_${order}`;
 
         // ★ 연장된 셀 테두리 표시
         if (extendedDayNums.has(dayNum)) {
             cell.classList.add('extended');
         }
 
-        if (completedMap.has(`${dayNum}_${order}`)) {
-            cell.classList.remove('empty', 'fail');
-            cell.classList.add('success');
+        const level = completedMap.get(key);
+
+        if (level && level > 0) {
+            // 인증률 레벨에 따라 클래스 적용
+            cell.classList.remove('empty', 'fail', 'success', 'level-1', 'level-2', 'level-3');
+            cell.classList.add(levelClasses[level]);
         } else if (dayNum < currentDay && !extendedDayNums.has(dayNum)) {
-            // ★ 연장된 날짜는 빨간칸(fail) 처리 안 함
-            cell.classList.remove('empty', 'success');
+            // ★ 기한 지남 + 미제출 → 빨간칸
+            cell.classList.remove('empty', 'success', 'level-1', 'level-2', 'level-3');
             cell.classList.add('fail');
         }
     });
@@ -644,10 +650,12 @@ function buildExtendedDayNums() {
 }
 
 /**
- * 완료된 과제 맵 생성
+ * 과제별 인증률 맵 생성 (V2)
  * key: "dayNum_order" (잔디 HTML의 data-day + data-order)
+ * value: 인증률 레벨 (0, 1, 2, 3)
+ *   0 = 미제출, 1 = 1차만, 2 = 1차+2차, 3 = 100% 완료
  * 
- * tr_study_records의 (week, day, task_type, module_number)를
+ * study_results_v2의 (section_type, week, day, module_number)를
  * 잔디 그리드의 (dayNum, order)에 매핑
  */
 function buildCompletedMap() {
@@ -655,7 +663,7 @@ function buildCompletedMap() {
     const programType = mpUser.programType || 'standard';
     const gridId = programType === 'fast' ? 'grass-fast' : 'grass-standard';
 
-    // task_type 매핑: Supabase → 잔디 data-type
+    // section_type → 잔디 data-type 매핑
     const typeMap = {
         'vocab': 'voca_test',
         'intro-book': 'intro_reading',
@@ -665,22 +673,37 @@ function buildCompletedMap() {
         'speaking': 'speaking'
     };
 
-    // 각 study_record → 해당 잔디 셀 매핑
-    mpStudyRecords.forEach(record => {
+    // 각 V2 결과 → 해당 잔디 셀 매핑
+    mpV2Results.forEach(record => {
         const week = record.week;
-        const dayKr = record.day; // '일', '월', etc.
-        const taskType = typeMap[record.task_type] || record.task_type;
+        const dayKr = record.day;
+        const sectionType = record.section_type;
+        const grassType = typeMap[sectionType] || sectionType;
 
         // week + 요일 → dayNum 계산
         const dayIndex = DAY_MAP_KR_TO_NUM[dayKr];
         if (dayIndex === undefined) return;
-        const dayNum = (week - 1) * 6 + dayIndex + 1;
+        const dayNum = (parseInt(week) - 1) * 6 + dayIndex + 1;
 
-        // 해당 dayNum의 모든 잔디 셀에서 task_type이 매칭되는 것 찾기
+        // 인증률 레벨 계산
+        let level = 0;
+        if (sectionType === 'vocab' || sectionType === 'intro-book') {
+            // 보카/입문서: 0 또는 3 (100%)
+            level = record.first_result_json ? 3 : 0;
+        } else {
+            // 리딩/리스닝/라이팅/스피킹: 4단계
+            if (record.first_result_json) level = 1;
+            if (record.first_result_json && record.second_result_json) level = 2;
+            if (record.first_result_json && record.second_result_json && record.error_note_submitted) level = 3;
+        }
+
+        if (level === 0) return;
+
+        // 해당 dayNum의 잔디 셀에서 타입 매칭
         const cells = document.querySelectorAll(`#${gridId} .g[data-day="${dayNum}"]`);
         cells.forEach(cell => {
-            if (cell.dataset.type === taskType) {
-                map.set(`${dayNum}_${cell.dataset.order}`, true);
+            if (cell.dataset.type === grassType) {
+                map.set(`${dayNum}_${cell.dataset.order}`, level);
             }
         });
     });
