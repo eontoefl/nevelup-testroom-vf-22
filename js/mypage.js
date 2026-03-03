@@ -321,8 +321,6 @@ function renderSummaryCards() {
     const today = new Date();
     if (today.getHours() < 4) today.setDate(today.getDate() - 1);
     today.setHours(0, 0, 0, 0);
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + totalCalendarDays - 1);
 
     const beforeStart = isBeforeStart();
 
@@ -449,7 +447,6 @@ function countTasksDueToday(programType, totalWeeks) {
     effectiveToday.setHours(0, 0, 0, 0);
 
     let totalTasks = 0;
-    let completedTasks = 0;
 
     for (let w = 1; w <= totalWeeks; w++) {
         for (let d = 0; d < dayOrder.length; d++) {
@@ -483,28 +480,12 @@ function countTasksDueToday(programType, totalWeeks) {
                     if (!parsed || parsed.type === 'unknown') return;
 
                     totalTasks++;
-
-                    // 완료 여부 확인 (study_results_v2 기준)
-                    if (parsed.type === 'vocab' || parsed.type === 'intro-book') {
-                        const found = mpV2Results.find(r => 
-                            r.section_type === parsed.type && String(r.week) === String(w) && r.day === dayKr
-                        );
-                        if (found) completedTasks++;
-                    } else {
-                        const modNum = parsed.params && (parsed.params.module || parsed.params.number) 
-                            ? (parsed.params.module || parsed.params.number) 
-                            : parsed.moduleNumber;
-                        const found = mpV2Results.find(r => 
-                            r.section_type === parsed.type && r.module_number == modNum
-                        );
-                        if (found) completedTasks++;
-                    }
                 });
             }
         }
     }
 
-    return { due: totalTasks, completed: completedTasks };
+    return { due: totalTasks };
 }
 
 /**
@@ -535,13 +516,9 @@ function getGradeFromRules(authRatePct) {
         };
     }
 
-    // 폴백: tr_grade_rules 로드 실패 시 하드코딩
-    console.warn('📊 [MyPage] tr_grade_rules 로드 실패, 폴백 사용');
-    if (authRatePct >= 95) return { letter: 'A', refundRate: 1.0, deposit: 100000, color: '#22c55e' };
-    if (authRatePct >= 90) return { letter: 'B', refundRate: 0.9, deposit: 100000, color: '#3b82f6' };
-    if (authRatePct >= 80) return { letter: 'C', refundRate: 0.8, deposit: 100000, color: '#f59e0b' };
-    if (authRatePct >= 70) return { letter: 'D', refundRate: 0.7, deposit: 100000, color: '#f97316' };
-    return { letter: 'F', refundRate: 0, deposit: 100000, color: '#ef4444' };
+    // 폴백: tr_grade_rules 로드 실패 시
+    console.warn('📊 [MyPage] tr_grade_rules 로드 실패, 등급 산정 불가');
+    return { letter: '-', refundRate: 0, deposit: 100000, color: '#6b7280' };
 }
 
 /**
