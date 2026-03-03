@@ -743,9 +743,9 @@ function buildChartData(sectionType) {
     const filtered = mpV2Results
         .filter(r => r.section_type === sectionType)
         .sort((a, b) => {
-            // week → day → module_number 순 정렬
-            const wA = (a.week || 0) * 100 + (a.day || 0) * 10 + (a.module_number || 0);
-            const wB = (b.week || 0) * 100 + (b.day || 0) * 10 + (b.module_number || 0);
+            // week → module_number 순 정렬 (숫자 추출)
+            const wA = extractNum(a.week) * 100 + (a.module_number || 0);
+            const wB = extractNum(b.week) * 100 + (b.module_number || 0);
             return wA - wB;
         });
 
@@ -754,7 +754,9 @@ function buildChartData(sectionType) {
     const secondScores = [];
 
     filtered.forEach(r => {
-        const label = `W${r.week || '?'}D${r.day || '?'} M${r.module_number || '?'}`;
+        const w = extractNum(r.week);
+        const m = r.module_number || '?';
+        const label = `W${w} M${m}`;
         const first = parseScore(r.first_result_json);
         const second = parseScore(r.second_result_json);
 
@@ -1129,6 +1131,18 @@ function handleLogout() {
 // ================================================
 // 유틸리티
 // ================================================
+
+/**
+ * week/day 값에서 숫자만 추출
+ * "Week 1" → 1, "1" → 1, 1 → 1, "일" → 0
+ */
+function extractNum(val) {
+    if (val === null || val === undefined) return 0;
+    if (typeof val === 'number') return val;
+    const match = String(val).match(/\d+/);
+    return match ? parseInt(match[0], 10) : 0;
+}
+
 function showNotLoggedIn() {
     document.getElementById('loadingScreen').style.display = 'none';
     document.getElementById('notLoggedScreen').style.display = 'flex';
