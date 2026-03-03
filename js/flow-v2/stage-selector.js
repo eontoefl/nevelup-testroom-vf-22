@@ -850,8 +850,12 @@ function showExplainV2() {
             backToStageSelect();
         });
     } else if (sectionType === 'speaking') {
-        // ★ 스피킹 해설: 따라말하기 복습 → 인터뷰 복습 → 대시보드
-        _showSpeakingExplainV2();
+        // ★ 스피킹 해설: DB에서 데이터 복원 → 따라말하기 복습 → 인터뷰 복습 → 대시보드
+        _showSpeakingExplainV2().catch(function(err) {
+            console.error('❌ [V2] 스피킹 해설 로드 실패:', err);
+            alert('스피킹 해설 데이터를 불러오는데 실패했습니다.');
+            backToStageSelect();
+        });
     } else {
         alert('해설 보기 — 아직 구현 전입니다 (' + sectionType + ')');
     }
@@ -935,12 +939,41 @@ async function _startSpeakingAttempt(attemptNum, moduleNumber, moduleConfig) {
 // ========================================
 // ★ 스피킹 해설 보기 (따라말하기 복습 → 인터뷰 복습 → 대시보드)
 // ========================================
-function _showSpeakingExplainV2() {
+// DB에서 문제 원본 데이터를 불러와 컴포넌트를 재생성한 뒤 해설 화면을 표시합니다.
+// 새로고침 후에도 DB 데이터만 있으면 해설을 정상적으로 볼 수 있습니다.
+// ========================================
+
+async function _showSpeakingExplainV2() {
     console.log('🎤 [V2] 스피킹 해설 시작: 따라말하기 복습');
+    
+    var moduleNumber = StageSelector.moduleNumber || 1;
+    var setIndex = moduleNumber - 1;
     
     // 모든 화면 숨기기
     document.querySelectorAll('.screen').forEach(function(s) { s.style.display = 'none'; });
     document.querySelectorAll('.result-screen, .test-screen').forEach(function(s) { s.style.display = 'none'; });
+    
+    // ★ 컴포넌트가 메모리에 없으면 DB에서 데이터를 불러와 재생성
+    if (!window.currentRepeatComponent || !window.currentRepeatComponent.speakingRepeatData) {
+        console.log('🔄 [V2] 따라말하기 컴포넌트 없음 → DB에서 복원 시도');
+        try {
+            var repeatComp = new RepeatComponent();
+            await repeatComp.loadRepeatData();
+            
+            if (repeatComp.speakingRepeatData && repeatComp.speakingRepeatData.sets && repeatComp.speakingRepeatData.sets.length > setIndex) {
+                repeatComp.setId = moduleNumber;
+                repeatComp.currentRepeatSet = setIndex;
+                window.currentRepeatComponent = repeatComp;
+                console.log('✅ [V2] 따라말하기 컴포넌트 DB에서 복원 성공');
+            } else {
+                console.warn('⚠️ [V2] 따라말하기 DB 데이터 없음 또는 세트 인덱스 초과');
+                window.currentRepeatComponent = null;
+            }
+        } catch (err) {
+            console.error('❌ [V2] 따라말하기 DB 복원 실패:', err);
+            window.currentRepeatComponent = null;
+        }
+    }
     
     // 1. 따라말하기 복습 화면 표시
     var repeatScreen = document.getElementById('speakingRepeatResultScreen');
@@ -958,18 +991,49 @@ function _showSpeakingExplainV2() {
         window.currentRepeatComponent.completeRepeatResult = function() {
             console.log('🎤 [V2] 따라말하기 복습 완료 → 인터뷰 복습으로');
             if (origComplete) origComplete.call(window.currentRepeatComponent);
-            _showInterviewExplainV2();
+            _showInterviewExplainV2().catch(function(err) {
+                console.error('❌ [V2] 인터뷰 해설 로드 실패:', err);
+                backToStageSelect();
+            });
         };
     } else {
-        console.warn('⚠️ [V2] 따라말하기 컴포넌트 없음, 인터뷰 복습으로 이동');
-        _showInterviewExplainV2();
+        console.warn('⚠️ [V2] 따라말하기 데이터 복원 실패, 인터뷰 복습으로 이동');
+        _showInterviewExplainV2().catch(function(err) {
+            console.error('❌ [V2] 인터뷰 해설 로드 실패:', err);
+            backToStageSelect();
+        });
     }
 }
 
-function _showInterviewExplainV2() {
+async function _showInterviewExplainV2() {
     console.log('🎙️ [V2] 인터뷰 복습 시작');
     
+    var moduleNumber = StageSelector.moduleNumber || 1;
+    var setIndex = moduleNumber - 1;
+    
     document.querySelectorAll('.screen').forEach(function(s) { s.style.display = 'none'; });
+    
+    // ★ 컴포넌트가 메모리에 없으면 DB에서 데이터를 불러와 재생성
+    if (!window.currentInterviewComponent || !window.currentInterviewComponent.speakingInterviewData) {
+        console.log('🔄 [V2] 인터뷰 컴포넌트 없음 → DB에서 복원 시도');
+        try {
+            var interviewComp = new InterviewComponent();
+            await interviewComp.loadInterviewData();
+            
+            if (interviewComp.speakingInterviewData && interviewComp.speakingInterviewData.sets && interviewComp.speakingInterviewData.sets.length > setIndex) {
+                interviewComp.setId = moduleNumber;
+                interviewComp.currentInterviewSet = setIndex;
+                window.currentInterviewComponent = interviewComp;
+                console.log('✅ [V2] 인터뷰 컴포넌트 DB에서 복원 성공');
+            } else {
+                console.warn('⚠️ [V2] 인터뷰 DB 데이터 없음 또는 세트 인덱스 초과');
+                window.currentInterviewComponent = null;
+            }
+        } catch (err) {
+            console.error('❌ [V2] 인터뷰 DB 복원 실패:', err);
+            window.currentInterviewComponent = null;
+        }
+    }
     
     var interviewScreen = document.getElementById('speakingInterviewResultScreen');
     if (interviewScreen && window.currentInterviewComponent) {
@@ -1005,7 +1069,7 @@ function _showInterviewExplainV2() {
             }
         }, 500);
     } else {
-        console.warn('⚠️ [V2] 인터뷰 컴포넌트 없음, 대시보드로 복귀');
+        console.warn('⚠️ [V2] 인터뷰 데이터 복원 실패, 대시보드로 복귀');
         backToStageSelect();
     }
 }
