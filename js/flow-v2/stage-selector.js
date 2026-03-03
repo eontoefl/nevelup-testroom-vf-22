@@ -165,6 +165,11 @@ function backToStageSelect() {
     
     // ★ 리뷰 버튼 숨김 (풀이 종료)
     if (typeof ReviewPanel !== 'undefined') ReviewPanel.updateButtonVisibility();
+    
+    // ★ 타이머/배지 복원 (2차 풀이 도중 나간 경우 대비)
+    if (window.retakeController && typeof window.retakeController.restoreHeaderToFirstMode === 'function') {
+        window.retakeController.restoreHeaderToFirstMode();
+    }
 }
 
 // ========================================
