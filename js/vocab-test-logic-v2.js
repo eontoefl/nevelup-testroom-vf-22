@@ -682,3 +682,48 @@ async function saveVocabRecord(correctCount, totalCount, percentage) {
 }
 
 console.log('✅ vocab-test-logic.js 로드 완료');
+
+// ========================================
+// 보카 시험 중 나가기 확인 팝업
+// showGuidePopup 스타일과 동일한 UI
+// ========================================
+function confirmLeaveVocab() {
+    // 오버레이
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease;';
+
+    // 팝업
+    var popup = document.createElement('div');
+    popup.style.cssText = 'background:#fff;border-radius:20px;max-width:380px;width:90%;padding:36px 28px 28px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:slideUp 0.3s ease;';
+
+    popup.innerHTML =
+        '<div style="font-size:48px;margin-bottom:16px;">⚠️</div>' +
+        '<h3 style="margin:0 0 12px;font-size:18px;font-weight:700;color:#1a1a1a;">시험을 중단하시겠습니까?</h3>' +
+        '<p style="margin:0 0 24px;font-size:14px;color:#666;line-height:1.7;">' +
+            '지금 나가면 작성한 답안이 <b style="color:#ef4444;">모두 삭제</b>되며,<br>' +
+            '처음부터 다시 풀어야 합니다.' +
+        '</p>' +
+        '<div style="display:flex;gap:10px;">' +
+            '<button id="vocabLeaveCancel" style="flex:1;padding:13px;border-radius:12px;border:1.5px solid #ddd;background:#fff;font-size:14px;font-weight:600;color:#666;cursor:pointer;">계속 풀기</button>' +
+            '<button id="vocabLeaveConfirm" style="flex:1;padding:13px;border-radius:12px;border:none;background:#f97316;font-size:14px;font-weight:600;color:#fff;cursor:pointer;">나가기</button>' +
+        '</div>';
+
+    overlay.appendChild(popup);
+    document.body.appendChild(overlay);
+
+    // 계속 풀기
+    document.getElementById('vocabLeaveCancel').onclick = function() {
+        overlay.remove();
+    };
+
+    // 나가기
+    document.getElementById('vocabLeaveConfirm').onclick = function() {
+        overlay.remove();
+        backToSchedule();
+    };
+
+    // 오버레이 배경 클릭 시 닫기
+    overlay.onclick = function(e) {
+        if (e.target === overlay) overlay.remove();
+    };
+}
