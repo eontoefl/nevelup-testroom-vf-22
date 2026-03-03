@@ -52,22 +52,13 @@ function initScheduleScreen() {
     const doRender = () => {
         renderSchedule(currentUser.program);
         
-        // 진도율 Progress Bar 표시
+        // 요일별 진도 표시용 데이터 로드 (상단 진도율 바는 제거)
         if (typeof ProgressTracker !== 'undefined') {
-            const pt = currentUser.programType || (currentUser.program === '내벨업챌린지 - Standard' ? 'standard' : 'fast');
-            
-            // ★ _loaded와 _loading 모두 리셋하여 강제 재조회
             ProgressTracker._loaded = false;
             ProgressTracker._loading = false;
             
-            // ★ 캐시에 이미 있는 데이터로 먼저 진도율 표시 (0% 방지)
-            if (Object.keys(ProgressTracker._completedTasks || {}).length > 0) {
-                ProgressTracker.renderTotalProgressBar(pt);
-            }
-            
             ProgressTracker.loadCompletedTasks().then(function() {
                 renderSchedule(currentUser.program);
-                ProgressTracker.renderTotalProgressBar(pt);
             });
         }
     };
