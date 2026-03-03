@@ -578,8 +578,8 @@
     <!-- [V2] 단계 선택 화면 — 과제 버튼 클릭 후 진입 -->
     <div id="stageSelectScreen" class="screen" style="display:none;">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToSchedule()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="showWelcomeScreen()">
+                <i class="fas fa-arrow-left"></i> 과제 목록으로
             </button>
             <div class="test-title" id="stageSelectTitle">리딩 모듈 1</div>
         </div>
@@ -729,8 +729,8 @@
     <!-- Reading 섹션 - 빈칸채우기 -->
     <div id="readingFillBlanksScreen" class="screen">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToSchedule()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <div class="test-progress">
                 <span id="fillBlanksProgress">Questions 1-10 of 35</span>
@@ -1354,8 +1354,8 @@
         
         <!-- 네비게이션 -->
         <div class="final-navigation">
-            <button class="btn btn-secondary" onclick="backToScheduleFromResult()">
-                <i class="fas fa-arrow-left"></i> 뒤로가기
+            <button class="btn btn-secondary" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <button class="btn btn-primary" id="finalNextBtn" onclick="goToNextFinalExplainPage()">
                 다음 페이지 <i class="fas fa-arrow-right"></i>
@@ -1366,8 +1366,8 @@
     <!-- 정답채점 화면 -->
     <div id="resultScreen" class="screen">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToScheduleFromResult()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <div class="test-title">
                 <i class="fas fa-chart-bar"></i>
@@ -1406,8 +1406,8 @@
                 </div>
                 
                 <div class="result-actions">
-                    <button class="btn btn-primary btn-large" onclick="backToScheduleFromResult()">
-                        <i class="fas fa-calendar"></i> 학습 일정으로 돌아가기
+                    <button class="btn btn-primary btn-large" onclick="backToStageSelect()">
+                        <i class="fas fa-clipboard-list"></i> 과제 화면으로 돌아가기
                     </button>
                 </div>
             </div>
@@ -1417,8 +1417,8 @@
     <!-- Reading 섹션 - 일상리딩1 -->
     <div id="readingDaily1Screen" class="screen">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToSchedule()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <div class="test-progress">
                 <span id="daily1Progress">Question 11 of 35</span>
@@ -1482,8 +1482,8 @@
     <!-- Reading 섹션 - 일상리딩1 결과 화면 -->
     <div id="readingDaily1ResultScreen" class="screen">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToScheduleFromResult()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <div class="test-title">
                 <i class="fas fa-chart-bar"></i>
@@ -1522,8 +1522,8 @@
                 </div>
                 
                 <div class="result-actions">
-                    <button class="btn btn-primary btn-large" onclick="backToScheduleFromResult()">
-                        <i class="fas fa-calendar"></i> 학습 일정으로 돌아가기
+                    <button class="btn btn-primary btn-large" onclick="backToStageSelect()">
+                        <i class="fas fa-clipboard-list"></i> 과제 화면으로 돌아가기
                     </button>
                 </div>
             </div>
@@ -1533,8 +1533,8 @@
     <!-- Reading 섹션 - 일상리딩1 정답 채점 결과 -->
     <div id="readingDaily2ResultScreen" class="screen">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToScheduleFromDaily2Result()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <div class="test-title">
                 <i class="fas fa-chart-bar"></i>
@@ -1573,8 +1573,8 @@
                 </div>
                 
                 <div class="result-actions">
-                    <button class="btn btn-primary btn-large" onclick="backToScheduleFromDaily2Result()">
-                        <i class="fas fa-calendar"></i> 학습 일정으로 돌아가기
+                    <button class="btn btn-primary btn-large" onclick="backToStageSelect()">
+                        <i class="fas fa-clipboard-list"></i> 과제 화면으로 돌아가기
                     </button>
                 </div>
             </div>
@@ -1584,8 +1584,8 @@
     <!-- Reading 섹션 - 일상리딩2 -->
     <div id="readingDaily2Screen" class="screen">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToSchedule()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <div class="test-progress">
                 <span id="daily2Progress">Question 15 of 35</span>
@@ -1646,8 +1646,8 @@
     <!-- Reading 섹션 - 아카데믹리딩 -->
     <div id="readingAcademicScreen" class="screen">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToSchedule()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <div class="test-progress">
                 <span id="academicProgress">Question 31 of 35</span>
@@ -1707,8 +1707,8 @@
     <!-- Listening - 응답고르기 -->
     <div id="listeningResponseScreen" class="screen">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToSchedule()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <div class="test-progress">
                 <span id="responseProgress">Question 1 of 12</span>
@@ -1762,8 +1762,8 @@
     <!-- Listening 섹션 - 응답고르기 정답 채점 결과 -->
     <div id="listeningResponseResultScreen" class="screen">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToScheduleFromResponseResult()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <div class="test-title">
                 <i class="fas fa-chart-bar"></i>
@@ -1802,8 +1802,8 @@
                 </div>
                 
                 <div class="result-actions">
-                    <button class="btn btn-primary btn-large" onclick="backToScheduleFromResponseResult()">
-                        <i class="fas fa-calendar"></i> 학습 일정으로 돌아가기
+                    <button class="btn btn-primary btn-large" onclick="backToStageSelect()">
+                        <i class="fas fa-clipboard-list"></i> 과제 화면으로 돌아가기
                     </button>
                 </div>
             </div>
@@ -1813,8 +1813,8 @@
     <!-- Listening - 컨버 -->
     <div id="listeningConverScreen" class="screen">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToSchedule()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <div class="test-progress">
                 <span id="converProgress">Question 1 of 2</span>
@@ -1902,8 +1902,8 @@
             <!-- JS가 conver-set 카드들을 여기에 삽입 -->
         </div>
         <div class="conver-navigation">
-            <button class="btn btn-primary" onclick="backToScheduleFromConverResult()">
-                <i class="fas fa-calendar"></i> 학습 일정으로 돌아가기
+            <button class="btn btn-primary" onclick="backToStageSelect()">
+                <i class="fas fa-clipboard-list"></i> 과제 화면으로 돌아가기
             </button>
         </div>
     </div>
@@ -1911,8 +1911,8 @@
     <!-- Listening - 공지사항 섹션 -->
     <div id="listeningAnnouncementScreen" class="screen">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToSchedule()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <div class="test-progress">
                 <span id="announcementProgress">Question 1 of 2</span>
@@ -2000,8 +2000,8 @@
             <!-- JS가 announce-set 카드들을 여기에 삽입 -->
         </div>
         <div class="announce-navigation">
-            <button class="btn btn-primary" onclick="backToScheduleFromAnnouncementResult()">
-                <i class="fas fa-calendar"></i> 학습 일정으로 돌아가기
+            <button class="btn btn-primary" onclick="backToStageSelect()">
+                <i class="fas fa-clipboard-list"></i> 과제 화면으로 돌아가기
             </button>
         </div>
     </div>
@@ -2048,8 +2048,8 @@
             <button class="btn btn-secondary" id="lecturePrevBtn" onclick="showListeningRetakeDetailPage(3)">
                 <i class="fas fa-arrow-left"></i> Announcement 해설
             </button>
-            <button class="btn btn-primary" id="lectureFinishBtn" onclick="backToSchedule()">
-                학습일정으로 돌아가기 <i class="fas fa-arrow-right"></i>
+            <button class="btn btn-primary" id="lectureFinishBtn" onclick="backToStageSelect()">
+                과제 화면으로 돌아가기 <i class="fas fa-arrow-right"></i>
             </button>
         </div>
     </div>
@@ -2057,8 +2057,8 @@
     <!-- Listening - 렉쳐 섹션 -->
     <div id="listeningLectureScreen" class="screen">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToSchedule()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <div class="test-progress">
                 <span id="lectureProgress">Question 1 of 4</span>
@@ -2117,8 +2117,8 @@
     <!-- Writing - 단어배열 섹션 -->
     <div id="writingArrangeScreen" class="screen">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToSchedule()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <div class="test-progress">
                 <span id="arrangeProgress">Question 1 of 10</span>
@@ -2154,8 +2154,8 @@
     <!-- Writing - 단어배열 채점 결과 화면 -->
     <div id="writingArrangeResultScreen" class="screen">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToSchedule()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <div class="test-title">
                 <i class="fas fa-chart-bar"></i>
@@ -2194,8 +2194,8 @@
                 </div>
                 
                 <div class="result-actions">
-                    <button class="btn btn-primary btn-large" onclick="backToSchedule()">
-                        <i class="fas fa-calendar"></i> 학습 일정으로 돌아가기
+                    <button class="btn btn-primary btn-large" onclick="backToStageSelect()">
+                        <i class="fas fa-clipboard-list"></i> 과제 화면으로 돌아가기
                     </button>
                 </div>
             </div>
@@ -2205,8 +2205,8 @@
     <!-- Writing - 이메일작성 섹션 -->
     <div id="writingEmailScreen" class="screen">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToSchedule()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <span id="emailProgress" class="test-progress">Question 1 of 2</span>
             <div class="test-title">
@@ -2291,8 +2291,8 @@
     <!-- Writing - 이메일작성 결과 화면 -->
     <div id="writingEmailResultScreen" class="screen">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToSchedule()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <div class="test-title">
                 <i class="fas fa-envelope"></i>
@@ -2380,8 +2380,8 @@
     <!-- Writing - 토론형 섹션 -->
     <div id="writingDiscussionScreen" class="screen">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToSchedule()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <span id="discussionProgress" class="test-progress">Question 1 of 1</span>
             <div class="test-title">
@@ -2484,8 +2484,8 @@
     <!-- Writing - 토론형 결과 화면 -->
     <div id="writingDiscussionResultScreen" class="screen">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToSchedule()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <div class="test-title">
                 <i class="fas fa-comments"></i>
@@ -2609,8 +2609,8 @@
     <!-- Speaking - 따라말하기 섹션 -->
     <div id="speakingRepeatScreen" class="screen">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToSchedule()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <div class="test-progress">
                 <span id="repeatProgress">Question 1 of 7</span>
@@ -2692,8 +2692,8 @@
     <!-- Speaking - 따라말하기 복습 화면 -->
     <div id="speakingRepeatResultScreen" class="screen">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToSchedule()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <div class="test-title">
                 <i class="fas fa-microphone"></i>
@@ -2753,8 +2753,8 @@
     <!-- Speaking - 인터뷰 섹션 -->
     <div id="speakingInterviewScreen" class="screen">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToSchedule()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <div class="test-progress">
                 <span id="interviewProgress">Question 1 of 4</span>
@@ -2860,8 +2860,8 @@
     <!-- Speaking - Interview 채점화면 -->
     <div id="speakingInterviewResultScreen" class="screen">
         <div class="test-header">
-            <button class="btn-back-to-schedule" onclick="backToScheduleFromInterviewResult()">
-                <i class="fas fa-arrow-left"></i> 학습 일정
+            <button class="btn-back-to-schedule" onclick="backToStageSelect()">
+                <i class="fas fa-arrow-left"></i> 과제 화면으로
             </button>
             <div class="test-title">
                 <i class="fas fa-microphone-alt"></i>
