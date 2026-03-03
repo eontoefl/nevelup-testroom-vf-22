@@ -34,7 +34,7 @@ const StudySave = (function() {
             user_id: user.id,
             section_type: StageSelector.sectionType || '',
             module_number: StageSelector.moduleNumber || 1,
-            week: ct.currentWeek || 'Week 1',
+            week: String(ct.currentWeek || 1).replace(/[^0-9]/g, '') || '1',
             day: ct.currentDay || '일'
         };
     }
