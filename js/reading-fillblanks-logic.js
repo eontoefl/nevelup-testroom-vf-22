@@ -19,6 +19,16 @@ let currentFillBlanksComponent = null;
 async function initFillBlanksComponent(setId, onCompleteCallback, initOptions = {}) {
     console.log(`📦 [모듈] initFillBlanksComponent - setId: ${setId}`, initOptions);
     
+    // 기존 컴포넌트 정리
+    if (currentFillBlanksComponent) {
+        console.log(`🧹 [모듈] 이전 FillBlanks Component 정리`);
+        currentFillBlanksComponent._destroyed = true;
+        if (currentFillBlanksComponent.cleanup) {
+            currentFillBlanksComponent.cleanup();
+        }
+        currentFillBlanksComponent = null;
+    }
+    
     // Component 생성
     currentFillBlanksComponent = new FillBlanksComponent(setId, {
         onComplete: (results) => {
