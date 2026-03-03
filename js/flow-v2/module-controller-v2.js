@@ -794,7 +794,7 @@ class ModuleController {
                 await new Promise(r => setTimeout(r, 800));
             }
             
-            this.initComponent(component);
+            await this.initComponent(component);
             this._removeLoadingOverlay();
             
         } catch (error) {
@@ -872,7 +872,7 @@ class ModuleController {
      * 컴포넌트 초기화
      * ================================================
      */
-    initComponent(component) {
+    async initComponent(component) {
         const { type, setId, questionsPerSet } = component;
         
         console.log(`🎯 컴포넌트 초기화: ${type} (Set ${setId}), 문제 시작: ${this.currentQuestionNumber + 1}`);
@@ -886,85 +886,84 @@ class ModuleController {
             totalModuleQuestions: this.config.totalQuestions
         };
         
-        // 컴포넌트별 초기화 함수 호출
+        // 컴포넌트별 초기화 함수 호출 (데이터 로드 완료까지 대기)
         switch (type) {
             case 'fillblanks':
                 this.currentComponentInstance = window.FillBlanksComponent;
                 if (!window.initFillBlanksComponent) throw new Error('initFillBlanksComponent가 로드되지 않았습니다');
-                window.initFillBlanksComponent(setId, this.onComponentComplete.bind(this), initOptions).then(() => {
-                    this.updateNavigationButtons(type, 0, questionsPerSet);
-                });
+                await window.initFillBlanksComponent(setId, this.onComponentComplete.bind(this), initOptions);
+                this.updateNavigationButtons(type, 0, questionsPerSet);
                 break;
                 
             case 'daily1':
                 this.currentComponentInstance = window.Daily1Component;
                 if (!window.initDaily1Component) throw new Error('initDaily1Component가 로드되지 않았습니다');
-                window.initDaily1Component(setId, this.onComponentComplete.bind(this), initOptions);
+                await window.initDaily1Component(setId, this.onComponentComplete.bind(this), initOptions);
                 break;
                 
             case 'daily2':
                 this.currentComponentInstance = window.Daily2Component;
                 if (!window.initDaily2Component) throw new Error('initDaily2Component가 로드되지 않았습니다');
-                window.initDaily2Component(setId, this.onComponentComplete.bind(this), initOptions);
+                await window.initDaily2Component(setId, this.onComponentComplete.bind(this), initOptions);
                 break;
                 
             case 'academic':
                 this.currentComponentInstance = window.AcademicComponent;
                 if (!window.initAcademicComponent) throw new Error('initAcademicComponent가 로드되지 않았습니다');
-                window.initAcademicComponent(setId, this.onComponentComplete.bind(this), initOptions);
+                await window.initAcademicComponent(setId, this.onComponentComplete.bind(this), initOptions);
                 break;
                 
             case 'response':
                 if (!window.initResponseComponent) throw new Error('initResponseComponent가 로드되지 않았습니다');
-                window.initResponseComponent(setId, this.onComponentComplete.bind(this), initOptions);
+                await window.initResponseComponent(setId, this.onComponentComplete.bind(this), initOptions);
                 this.currentComponentInstance = window.currentResponseComponent;
                 break;
                 
             case 'conver':
                 if (!window.initConverComponent) throw new Error('initConverComponent가 로드되지 않았습니다');
-                window.initConverComponent(setId, this.onComponentComplete.bind(this), initOptions);
+                await window.initConverComponent(setId, this.onComponentComplete.bind(this), initOptions);
                 this.currentComponentInstance = window.currentConverComponent;
                 break;
                 
             case 'announcement':
                 if (!window.initAnnouncementComponent) throw new Error('initAnnouncementComponent가 로드되지 않았습니다');
-                window.initAnnouncementComponent(setId, this.onComponentComplete.bind(this), initOptions);
+                await window.initAnnouncementComponent(setId, this.onComponentComplete.bind(this), initOptions);
                 this.currentComponentInstance = window.currentAnnouncementComponent;
                 break;
                 
             case 'lecture':
                 if (!window.initLectureComponent) throw new Error('initLectureComponent가 로드되지 않았습니다');
-                window.initLectureComponent(setId, this.onComponentComplete.bind(this), initOptions);
+                await window.initLectureComponent(setId, this.onComponentComplete.bind(this), initOptions);
                 this.currentComponentInstance = window.currentLectureComponent;
                 break;
                 
             case 'arrange':
                 if (!window.initArrangeComponent) throw new Error('initArrangeComponent가 로드되지 않았습니다');
-                window.initArrangeComponent(setId, this.onComponentComplete.bind(this), initOptions);
+                await window.initArrangeComponent(setId, this.onComponentComplete.bind(this), initOptions);
                 this.currentComponentInstance = window.currentArrangeComponent;
                 break;
                 
             case 'email':
                 if (!window.initEmailComponent) throw new Error('initEmailComponent가 로드되지 않았습니다');
-                window.initEmailComponent(setId, this.onComponentComplete.bind(this), initOptions);
+                await window.initEmailComponent(setId, this.onComponentComplete.bind(this), initOptions);
                 this.currentComponentInstance = window.currentEmailComponent;
                 break;
                 
             case 'discussion':
                 if (!window.initDiscussionComponent) throw new Error('initDiscussionComponent가 로드되지 않았습니다');
-                window.initDiscussionComponent(setId, this.onComponentComplete.bind(this), initOptions);
+                await window.initDiscussionComponent(setId, this.onComponentComplete.bind(this), initOptions);
                 this.currentComponentInstance = window.currentDiscussionComponent;
                 break;
                 
             case 'repeat':
                 if (!window.initRepeatComponent) throw new Error('initRepeatComponent가 로드되지 않았습니다');
-                window.initRepeatComponent(setId, this.onComponentComplete.bind(this), initOptions);
+                await window.initRepeatComponent(setId, this.onComponentComplete.bind(this), initOptions);
                 this.currentComponentInstance = window.currentRepeatComponent;
                 break;
                 
             case 'interview':
                 if (!window.initInterviewComponent) throw new Error('initInterviewComponent가 로드되지 않았습니다');
-                window.initInterviewComponent(setId, this.onComponentComplete.bind(this), initOptions);
+                await window.initInterviewComponent(setId, this.onComponentComplete.bind(this), initOptions);
                 this.currentComponentInstance = window.currentInterviewComponent;
                 break;
                 
