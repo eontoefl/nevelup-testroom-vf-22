@@ -629,7 +629,7 @@ async function startSecondAttemptV2() {
             
             // ★ 라이팅 2차 완료 안내 팝업
             if (typeof showGuidePopup === 'function') {
-                showGuidePopup({ icon: '✅', title: '2차 풀이가 완료되었습니다', desc: '해설을 확인하고 <b>오답노트</b>를 작성해주세요.', notice: '오답노트까지 제출하면 <b>100% 인증</b>됩니다.', btn: '확인', theme: 'theme-green' });
+                showGuidePopup({ icon: '✅', title: '2차 풀이가 완료되었습니다', desc: '해설을 확인하고 <b>오답노트</b>를 작성해주세요.', tip: '오답노트까지 제출하면 <b>100% 인증</b>됩니다.', notice: '', btn: '확인', theme: 'theme-green' });
             }
         });
         return;
@@ -695,7 +695,7 @@ function addReturnButtonToRetakeResult(secondResults) {
     returnBtn.onclick = async function() {
         // ★ 리딩/리스닝 2차 완료 안내 팝업
         if (typeof showGuidePopup === 'function') {
-            await showGuidePopup({ icon: '✅', title: '2차 풀이가 완료되었습니다', desc: '해설을 확인하고 <b>오답노트</b>를 작성해주세요.', notice: '오답노트까지 제출하면 <b>100% 인증</b>됩니다.', btn: '과제 화면으로', theme: 'theme-green' });
+            await showGuidePopup({ icon: '✅', title: '2차 풀이가 완료되었습니다', desc: '해설을 확인하고 <b>오답노트</b>를 작성해주세요.', tip: '오답노트까지 제출하면 <b>100% 인증</b>됩니다.', notice: '', btn: '과제 화면으로', theme: 'theme-green' });
         }
         returnToStageSelectAfterRetake(secondResults);
     };
@@ -721,6 +721,11 @@ function returnToStageSelectAfterRetake(secondResults) {
  */
 
 /**
+ * 풀이 중 이탈 주의사항 (공통)
+ */
+const EXIT_WARNING = '풀이 중 뒤로가기·새로고침 시 작성 내용이 모두 삭제되며, 처음부터 다시 풀어야 합니다.';
+
+/**
  * 1차 풀이 시작 전 안내 팝업 (리딩/리스닝/라이팅)
  * 스피킹은 별도 _startSpeakingAttempt에서 처리
  */
@@ -731,7 +736,8 @@ function _getFirstStartGuide(sectionType) {
                 icon: '📖',
                 title: '1차 풀이를 시작합니다',
                 desc: '총 <b>35문제</b>입니다.<br>집중해서 풀어주세요.',
-                notice: '',
+                tip: '',
+                notice: EXIT_WARNING,
                 btn: '시작하기',
                 theme: 'theme-purple'
             };
@@ -740,7 +746,8 @@ function _getFirstStartGuide(sectionType) {
                 icon: '🎧',
                 title: '1차 풀이를 시작합니다',
                 desc: '총 <b>32문제</b>입니다.<br>이어폰 착용을 권장합니다.',
-                notice: '음원은 <b>1회만</b> 재생됩니다.<br>문항당 제한시간: <b>20초</b> (강의 파트 <b>30초</b>)',
+                tip: '음원은 <b>1회만</b> 재생됩니다.<br>문항당 제한시간: <b>20초</b> (강의 파트 <b>30초</b>)',
+                notice: EXIT_WARNING,
                 btn: '시작하기',
                 theme: 'theme-purple'
             };
@@ -749,7 +756,8 @@ function _getFirstStartGuide(sectionType) {
                 icon: '✏️',
                 title: '1차 풀이를 시작합니다',
                 desc: '과제 순서: <b>단어배열 → 이메일 → 토론형</b>',
-                notice: '',
+                tip: '',
+                notice: EXIT_WARNING,
                 btn: '시작하기',
                 theme: 'theme-purple'
             };
@@ -769,7 +777,8 @@ function _getSecondStartGuide(sectionType) {
                 icon: '🔄',
                 title: '2차 풀이를 시작합니다',
                 desc: '1차에서 <b>틀린 문제만</b> 다시 풀어주세요.',
-                notice: '이미 맞힌 문제는 다시 선택하지 않아도 됩니다.',
+                tip: '이미 맞힌 문제는 다시 선택하지 않아도 됩니다.',
+                notice: EXIT_WARNING,
                 btn: '시작하기',
                 theme: 'theme-blue'
             };
@@ -778,7 +787,8 @@ function _getSecondStartGuide(sectionType) {
                 icon: '🔄',
                 title: '2차 풀이를 시작합니다',
                 desc: '1차에서 <b>틀린 문제만</b> 다시 풀어주세요.',
-                notice: '이미 맞힌 문제는 다시 선택하지 않아도 됩니다.',
+                tip: '이미 맞힌 문제는 다시 선택하지 않아도 됩니다.',
+                notice: EXIT_WARNING,
                 btn: '시작하기',
                 theme: 'theme-blue'
             };
@@ -787,9 +797,10 @@ function _getSecondStartGuide(sectionType) {
                 icon: '🔄',
                 title: '2차 풀이를 시작합니다',
                 desc: '과제 순서: <b>단어배열 → 이메일 → 토론형</b>',
-                notice: '① 한글 모범답안은 단순 참고 자료이니,<br>&nbsp;&nbsp;&nbsp;&nbsp;충분히 읽고 뒤로 가기를 누르지 마세요.<br>' +
+                tip: '① 한글 모범답안은 단순 참고 자료이니,<br>&nbsp;&nbsp;&nbsp;&nbsp;충분히 읽고 뒤로 가기를 누르지 마세요.<br>' +
                         '② 한글로 제공하는 이유는 그대로 베끼지 않고,<br>&nbsp;&nbsp;&nbsp;&nbsp;본인만의 표현으로 작성하도록 하기 위함입니다.<br>' +
                         '③ 답안을 옆에 띄워놓고 따라 쓰지 말고,<br>&nbsp;&nbsp;&nbsp;&nbsp;본인의 문장으로 직접 작성해 주세요.',
+                notice: EXIT_WARNING,
                 btn: '시작하기',
                 theme: 'theme-blue'
             };
@@ -996,7 +1007,8 @@ async function _startSpeakingAttempt(attemptNum, moduleNumber, moduleConfig) {
             icon: '🎤',
             title: attemptNum + '차 답변을 시작합니다',
             desc: '휴대폰 <b>녹음 기능을 켠 채로</b> 시작해주세요.',
-            notice: '녹음 파일은 오답노트 제출 시 첨부해야 합니다.',
+            tip: '녹음 파일은 오답노트 제출 시 첨부해야 합니다.',
+            notice: EXIT_WARNING,
             btn: '시작하기',
             theme: attemptNum === 1 ? 'theme-purple' : 'theme-blue'
         });
