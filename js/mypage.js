@@ -14,26 +14,9 @@
 // ================================================
 let mpUser = null;           // sessionStorage에서 로드한 유저 정보
 let mpV2Results = [];        // study_results_v2
-let mpStudyRecords = [];     // (잔디/최근기록용 — 추후 V2 전환 예정)
+let mpStudyRecords = [];     // (최근기록용 — 추후 V2 전환 예정, 현재 빈 배열)
 let mpGradeRules = [];       // tr_grade_rules (등급/환급 기준표)
 let mpDeadlineExtensions = []; // tr_deadline_extensions (데드라인 연장)
-
-// ================================================
-// 스케줄 데이터 (총 과제 수 / 총 일수 계산용)
-// ================================================
-// 총 일수/과제 수는 DOM에서 동적으로 계산
-function getScheduleMeta(programType) {
-    const gridId = programType === 'fast' ? 'grass-fast' : 'grass-standard';
-    const cells = document.querySelectorAll(`#${gridId} .g`);
-    const totalTasks = cells.length;
-
-    // 고유 day 수 = 총 학습일
-    const daySet = new Set();
-    cells.forEach(c => daySet.add(c.dataset.day));
-    const totalDays = daySet.size;
-
-    return { totalDays, totalTasks };
-}
 
 // task_type을 요일 매핑하기 위한 한→영 변환
 const DAY_MAP_KR_TO_NUM = { '일': 0, '월': 1, '화': 2, '수': 3, '목': 4, '금': 5 };
@@ -717,12 +700,20 @@ function buildCompletedMap() {
 function getCurrentScheduleDay() {
     if (!mpUser.startDate) return 1;
     const start = new Date(mpUser.startDate);
+    start.setHours(0, 0, 0, 0);
+
+    // 새벽 4시 기준: 4시 이전이면 전날로 간주
     const now = new Date();
+    const effectiveToday = new Date(now);
+    if (now.getHours() < 4) {
+        effectiveToday.setDate(effectiveToday.getDate() - 1);
+    }
+    effectiveToday.setHours(0, 0, 0, 0);
 
     // 시작일부터 오늘까지 경과 일수 (토요일 제외)
     let count = 0;
     const d = new Date(start);
-    while (d <= now) {
+    while (d <= effectiveToday) {
         if (d.getDay() !== 6) count++; // 토요일 제외
         d.setDate(d.getDate() + 1);
     }
