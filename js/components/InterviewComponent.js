@@ -878,20 +878,16 @@ class InterviewComponent {
      * 인터뷰 완료
      */
     completeSpeakingInterview() {
-        if (this.interviewTimer) {
-            clearInterval(this.interviewTimer);
-        }
-        
-        if (this.currentVideo) {
-            this.currentVideo.pause();
-            this.currentVideo = null;
-        }
-        
         console.log('✅ 스피킹-인터뷰 완료 → 채점화면으로 이동');
         
-        const set = this.speakingInterviewData.sets[this.currentInterviewSet];
+        // ★ 결과 데이터를 cleanup 전에 먼저 저장
+        const set = this.speakingInterviewData ? this.speakingInterviewData.sets[this.currentInterviewSet] : null;
+        const result = { set: set };
         
-        return { set: set };
+        // ★ 컴포넌트 완전 정리 (타이머, 영상, 오디오, 예약 동작, 반복 영상 모두 중단)
+        this.cleanup();
+        
+        return result;
     }
     
     /**

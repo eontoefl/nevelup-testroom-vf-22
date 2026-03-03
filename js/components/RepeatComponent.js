@@ -648,19 +648,16 @@ class RepeatComponent {
      * 따라말하기 완료
      */
     completeSpeakingRepeat() {
-        if (this.repeatTimer) {
-            clearInterval(this.repeatTimer);
-        }
-        
-        if (this.currentAudio) {
-            this.currentAudio.pause();
-            this.currentAudio = null;
-        }
-        
         console.log('✅ 스피킹-따라말하기 완료 → 복습 화면으로 이동');
         
-        const set = this.speakingRepeatData.sets[this.currentRepeatSet];
-        return { set: set };
+        // ★ 결과 데이터를 cleanup 전에 먼저 저장
+        const set = this.speakingRepeatData ? this.speakingRepeatData.sets[this.currentRepeatSet] : null;
+        const result = { set: set };
+        
+        // ★ 컴포넌트 완전 정리 (타이머, 오디오, 예약 동작 모두 중단)
+        this.cleanup();
+        
+        return result;
     }
     
     /**
