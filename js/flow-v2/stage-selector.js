@@ -168,7 +168,7 @@ function backToStageSelect() {
 // 4개 버튼 핸들러
 // ========================================
 
-function startFirstAttemptV2() {
+async function startFirstAttemptV2() {
     const sectionType = StageSelector.sectionType;
     const moduleNumber = StageSelector.moduleNumber;
     
@@ -186,6 +186,12 @@ function startFirstAttemptV2() {
     if (sectionType === 'speaking') {
         _startSpeakingAttempt(1, moduleNumber, moduleConfig);
         return;
+    }
+    
+    // ★ 섹션별 1차 시작 안내 팝업
+    if (typeof showGuidePopup === 'function') {
+        var guideConfig = _getFirstStartGuide(sectionType);
+        if (guideConfig) await showGuidePopup(guideConfig);
     }
     
     // ★ 라이팅은 전용 플로우 사용
@@ -208,6 +214,11 @@ function startFirstAttemptV2() {
             // 1차 완료 상태 갱신
             var status1st = document.getElementById('stage1stStatus');
             if (status1st) { status1st.textContent = '✅ 완료'; status1st.classList.add('stage-status-done'); }
+            
+            // ★ 라이팅 1차 완료 안내 팝업
+            if (typeof showGuidePopup === 'function') {
+                showGuidePopup({ icon: '✅', title: '1차 풀이가 완료되었습니다', desc: '2차 풀이도 진행해주세요.', notice: '', btn: '확인', theme: 'theme-green' });
+            }
         });
         return;
     }
@@ -251,7 +262,11 @@ function startFirstAttemptV2() {
                     const backBtn = document.createElement('button');
                     backBtn.className = 'btn btn-primary';
                     backBtn.textContent = '과제 화면으로 돌아가기';
-                    backBtn.onclick = function() {
+                    backBtn.onclick = async function() {
+                        // ★ 리딩/리스닝 1차 완료 안내 팝업
+                        if (typeof showGuidePopup === 'function') {
+                            await showGuidePopup({ icon: '✅', title: '1차 풀이가 완료되었습니다', desc: '2차 풀이도 진행해주세요.', notice: '', btn: '과제 화면으로', theme: 'theme-green' });
+                        }
                         returnToStageSelect(result);
                     };
                     btnContainer.appendChild(backBtn);
@@ -534,7 +549,7 @@ function updateSpeakingDashboard(result, attempt) {
     console.log('📊 [V2] 스피킹 대시보드 업데이트:', attempt, '답변 완료');
 }
 
-function startSecondAttemptV2() {
+async function startSecondAttemptV2() {
     const sectionType = StageSelector.sectionType;
     const moduleNumber = StageSelector.moduleNumber;
     
@@ -557,6 +572,12 @@ function startSecondAttemptV2() {
         }
         _startSpeakingAttempt(2, moduleNumber, moduleConfig);
         return;
+    }
+    
+    // ★ 섹션별 2차 시작 안내 팝업
+    if (typeof showGuidePopup === 'function') {
+        var guideConfig = _getSecondStartGuide(sectionType);
+        if (guideConfig) await showGuidePopup(guideConfig);
     }
     
     // ★ 라이팅은 전용 플로우 사용
@@ -594,6 +615,11 @@ function startSecondAttemptV2() {
             // 2차 완료 상태 갱신
             var status2nd = document.getElementById('stage2ndStatus');
             if (status2nd) { status2nd.textContent = '✅ 완료'; status2nd.classList.add('stage-status-done'); }
+            
+            // ★ 라이팅 2차 완료 안내 팝업
+            if (typeof showGuidePopup === 'function') {
+                showGuidePopup({ icon: '✅', title: '2차 풀이가 완료되었습니다', desc: '해설을 확인하고 <b>오답노트</b>를 작성해주세요.', notice: '오답노트까지 제출하면 <b>100% 인증</b>됩니다.', btn: '확인', theme: 'theme-green' });
+            }
         });
         return;
     }
@@ -652,7 +678,11 @@ function addReturnButtonToRetakeResult(secondResults) {
     returnBtn.className = 'btn btn-secondary btn-large v2-return-btn';
     returnBtn.style.cssText = 'margin:20px auto; display:block; width:90%; max-width:400px; background:#9480c5; color:#fff; border:none; padding:14px 24px; border-radius:12px; font-size:16px; font-weight:600; cursor:pointer;';
     returnBtn.textContent = '📋 과제 화면으로 돌아가기';
-    returnBtn.onclick = function() {
+    returnBtn.onclick = async function() {
+        // ★ 리딩/리스닝 2차 완료 안내 팝업
+        if (typeof showGuidePopup === 'function') {
+            await showGuidePopup({ icon: '✅', title: '2차 풀이가 완료되었습니다', desc: '해설을 확인하고 <b>오답노트</b>를 작성해주세요.', notice: '오답노트까지 제출하면 <b>100% 인증</b>됩니다.', btn: '과제 화면으로', theme: 'theme-green' });
+        }
         returnToStageSelectAfterRetake(secondResults);
     };
     retakeScreen.appendChild(returnBtn);
@@ -669,10 +699,91 @@ function returnToStageSelectAfterRetake(secondResults) {
     backToStageSelect();
 }
 
-function showResultV2() {
-    console.log('📊 [V2] 채점 결과 표시 예정:', StageSelector.sectionType, StageSelector.moduleNumber);
-    alert('채점 결과 — 아직 구현 전입니다.');
+
+/**
+ * ================================================
+ * 섹션별 시작 안내 팝업 설정
+ * ================================================
+ */
+
+/**
+ * 1차 풀이 시작 전 안내 팝업 (리딩/리스닝/라이팅)
+ * 스피킹은 별도 _startSpeakingAttempt에서 처리
+ */
+function _getFirstStartGuide(sectionType) {
+    switch (sectionType) {
+        case 'reading':
+            return {
+                icon: '📖',
+                title: '1차 풀이를 시작합니다',
+                desc: '총 <b>35문제</b>입니다.<br>집중해서 풀어주세요.',
+                notice: '풀이 중에는 이전 문제로 돌아갈 수 없습니다.',
+                btn: '시작하기',
+                theme: 'theme-purple'
+            };
+        case 'listening':
+            return {
+                icon: '🎧',
+                title: '1차 풀이를 시작합니다',
+                desc: '총 <b>32문제</b>입니다.<br>이어폰 착용을 권장합니다.',
+                notice: '음원은 <b>1회만</b> 재생됩니다.<br>문항당 제한시간: <b>20초</b> (강의 파트 <b>30초</b>)',
+                btn: '시작하기',
+                theme: 'theme-purple'
+            };
+        case 'writing':
+            return {
+                icon: '✏️',
+                title: '1차 풀이를 시작합니다',
+                desc: '과제 순서: <b>단어배열 → 이메일 → 토론형</b>',
+                notice: '',
+                btn: '시작하기',
+                theme: 'theme-purple'
+            };
+        default:
+            return null;
+    }
 }
+
+/**
+ * 2차 풀이 시작 전 안내 팝업 (리딩/리스닝/라이팅)
+ * 스피킹은 별도 _startSpeakingAttempt에서 처리
+ */
+function _getSecondStartGuide(sectionType) {
+    switch (sectionType) {
+        case 'reading':
+            return {
+                icon: '🔄',
+                title: '2차 풀이를 시작합니다',
+                desc: '1차에서 <b>틀린 문제만</b> 다시 풀어주세요.',
+                notice: '이미 맞힌 문제는 다시 선택하지 않아도 됩니다.',
+                btn: '시작하기',
+                theme: 'theme-blue'
+            };
+        case 'listening':
+            return {
+                icon: '🔄',
+                title: '2차 풀이를 시작합니다',
+                desc: '1차에서 <b>틀린 문제만</b> 다시 풀어주세요.',
+                notice: '이미 맞힌 문제는 다시 선택하지 않아도 됩니다.<br>음원은 <b>1회만</b> 재생됩니다.',
+                btn: '시작하기',
+                theme: 'theme-blue'
+            };
+        case 'writing':
+            return {
+                icon: '🔄',
+                title: '2차 풀이를 시작합니다',
+                desc: '과제 순서: <b>단어배열 → 이메일 → 토론형</b>',
+                notice: '① 한글 모범답안은 단순 참고 자료이니,<br>&nbsp;&nbsp;&nbsp;&nbsp;충분히 읽고 뒤로 가기를 누르지 마세요.<br>' +
+                        '② 한글로 제공하는 이유는 그대로 베끼지 않고,<br>&nbsp;&nbsp;&nbsp;&nbsp;본인만의 표현으로 작성하도록 하기 위함입니다.<br>' +
+                        '③ 답안을 옆에 띄워놓고 따라 쓰지 말고,<br>&nbsp;&nbsp;&nbsp;&nbsp;본인의 문장으로 직접 작성해 주세요.',
+                btn: '시작하기',
+                theme: 'theme-blue'
+            };
+        default:
+            return null;
+    }
+}
+
 
 /**
  * 오답노트 보기 — 대시보드 버튼 클릭 시 호출
@@ -856,8 +967,6 @@ function showExplainV2() {
             alert('스피킹 해설 데이터를 불러오는데 실패했습니다.');
             backToStageSelect();
         });
-    } else {
-        alert('해설 보기 — 아직 구현 전입니다 (' + sectionType + ')');
     }
 }
 
