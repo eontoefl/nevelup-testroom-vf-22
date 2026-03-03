@@ -268,7 +268,7 @@ body {
 
 .card-blue   { background: var(--signature-pale);  border-color: #d8cff0; }
 .card-green  { background: var(--accent-light);    border-color: #bde6c0; }
-.card-purple { background: var(--signature-pale);  border-color: #d8cff0; }
+.card-purple { background: #ede8f5;                border-color: #c4b5e0; }
 .card-orange { background: var(--orange-light);    border-color: #f2c9b0; }
 
 .sc-icon {
@@ -280,7 +280,7 @@ body {
 }
 .card-blue   .sc-icon { background: #9480c522; color: var(--signature); }
 .card-green  .sc-icon { background: #77bf7e22; color: var(--accent); }
-.card-purple .sc-icon { background: #9480c522; color: var(--signature); }
+.card-purple .sc-icon { background: #7c3aed22; color: #7c3aed; }
 .card-orange .sc-icon { background: #e8875a22; color: var(--orange); }
 
 .sc-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
@@ -327,6 +327,7 @@ body {
   transition: width .6s ease;
 }
 .card-green  .progress-fill { background: var(--accent); }
+.card-purple .progress-fill { background: #7c3aed; }
 .card-orange .progress-fill { background: var(--orange); }
 
 .sc-sub {
@@ -378,7 +379,7 @@ body {
   padding: 5px 10px;
   background: rgba(255,255,255,0.6);
   border-radius: 6px;
-  border-left: 3px solid var(--accent);
+
 }
 .today-task-count {
   font-size: .7rem;
