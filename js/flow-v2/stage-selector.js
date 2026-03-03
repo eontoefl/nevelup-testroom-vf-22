@@ -369,7 +369,7 @@ function updateStageDashboard(result, attempt) {
                 'announcement': '공지사항', 'lecture': '강의'
             };
             result.componentResults.forEach(function(comp) {
-                var answers = comp.answers || comp.results || [];
+                var answers = comp.answers || [];
                 var correct = answers.filter(function(a) { return a.isCorrect; }).length;
                 totalCorrect += correct;
                 componentScores.push({ name: nameMap[comp.componentType] || comp.componentType, correct: correct, total: answers.length });

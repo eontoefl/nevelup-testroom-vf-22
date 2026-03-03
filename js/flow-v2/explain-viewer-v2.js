@@ -104,7 +104,7 @@ function showExplainTab(componentType, firstResult, secondResult, secondAttemptA
     var startIndex = 0;
     for (var i = 0; i < componentResults.length; i++) {
         if (componentResults[i].componentType === componentType) break;
-        var ans = componentResults[i].answers || componentResults[i].results || [];
+        var ans = componentResults[i].answers || [];
         startIndex += ans.length;
     }
 
@@ -149,7 +149,7 @@ function calculateComponentStats(componentType, componentResults, secondAttemptA
     var globalIndex = 0;
 
     componentResults.forEach(function(comp) {
-        var answers = comp.answers || comp.results || [];
+        var answers = comp.answers || [];
         answers.forEach(function(answer) {
             if (comp.componentType === componentType) {
                 firstTotal++;
@@ -202,7 +202,7 @@ function renderFillBlanksExplain(components, secondAttemptAnswers, allResults, f
         var setBlock = document.createElement('div');
         setBlock.className = 'result-section';
 
-        var answers = comp.answers || comp.results || [];
+        var answers = comp.answers || [];
         var firstCorrect = answers.filter(function(a) { return a.isCorrect; }).length;
 
         // 2차 정답 계산
@@ -293,7 +293,7 @@ function renderDaily1Explain(components, secondAttemptAnswers, allResults, first
     components.forEach(function(comp, setIndex) {
         var setBlock = document.createElement('div');
         setBlock.className = 'result-section';
-        var answers = comp.answers || comp.results || [];
+        var answers = comp.answers || [];
         var firstCorrect = answers.filter(function(a) { return a.isCorrect; }).length;
 
         var secondCorrect = 0;
@@ -341,7 +341,7 @@ function renderDaily2Explain(components, secondAttemptAnswers, allResults, first
     components.forEach(function(comp, setIndex) {
         var setBlock = document.createElement('div');
         setBlock.className = 'result-section';
-        var answers = comp.answers || comp.results || [];
+        var answers = comp.answers || [];
         var firstCorrect = answers.filter(function(a) { return a.isCorrect; }).length;
 
         var secondCorrect = 0;
@@ -388,7 +388,7 @@ function renderAcademicExplain(components, secondAttemptAnswers, allResults, fir
     components.forEach(function(comp, setIndex) {
         var setBlock = document.createElement('div');
         setBlock.className = 'result-section';
-        var answers = comp.answers || comp.results || [];
+        var answers = comp.answers || [];
         var firstCorrect = answers.filter(function(a) { return a.isCorrect; }).length;
 
         var secondCorrect = 0;

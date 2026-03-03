@@ -70,7 +70,7 @@ const StudySave = (function() {
         let totalCorrect = 0;
         if (moduleResult.componentResults) {
             moduleResult.componentResults.forEach(function(comp) {
-                const answers = comp.answers || comp.results || [];
+                const answers = comp.answers || [];
                 totalCorrect += answers.filter(function(a) { return a.isCorrect; }).length;
             });
         }

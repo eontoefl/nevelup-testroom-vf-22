@@ -269,7 +269,7 @@ class RetakeController {
                 const localIndex = globalQuestionIndex - currentIndex;
                 const compResult = this.firstAttemptData.componentResults[componentIndex];
                 if (!compResult) return false;
-                const answerArray = compResult.answers || compResult.results || [];
+                const answerArray = compResult.answers || [];
                 return answerArray[localIndex]?.isCorrect || false;
             }
             
@@ -295,7 +295,7 @@ class RetakeController {
                 const localIndex = globalQuestionIndex - currentIndex;
                 const compResult = this.firstAttemptData.componentResults[componentIndex];
                 if (!compResult) return null;
-                const answerArray = compResult.answers || compResult.results || [];
+                const answerArray = compResult.answers || [];
                 return answerArray[localIndex] || null;
             }
             
@@ -1546,7 +1546,7 @@ class RetakeController {
         for (const component of this.moduleConfig.components) {
             const questionsInComponent = component.questionsPerSet;
             const compResult = this.firstAttemptData.componentResults[componentIndex];
-            const answerArray = compResult ? (compResult.answers || compResult.results || []) : [];
+            const answerArray = compResult ? (compResult.answers || []) : [];
             
             for (let localIdx = 0; localIdx < questionsInComponent; localIdx++) {
                 const answerData = answerArray[localIdx];

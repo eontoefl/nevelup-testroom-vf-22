@@ -31,7 +31,7 @@ class ResultController {
             let total = 0;
             
             // ✅ 수정: answers 또는 results 필드 모두 지원
-            const answerArray = comp.answers || comp.results;
+            const answerArray = comp.answers;
             
             if (answerArray && Array.isArray(answerArray)) {
                 total = answerArray.length;
