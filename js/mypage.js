@@ -106,6 +106,7 @@ async function loadAllData() {
 // 전체 렌더링
 // ================================================
 function renderAll() {
+    renderTodayTasks();
     renderSummaryCards();
     renderDeadlineExtensionBanner();
     renderGrass();
@@ -221,6 +222,108 @@ function formatStartDate(dateStr) {
     return `${d.getMonth() + 1}/${d.getDate()} (${days[d.getDay()]})`;
 }
 
+/**
+ * 시작일 전체 포맷: "2026-02-22(일)"
+ */
+function formatFullDate(dateStr) {
+    const d = new Date(dateStr);
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}(${days[d.getDay()]})`;
+}
+
+// ================================================
+// 오늘의 과제 리스트 렌더링
+// ================================================
+function renderTodayTasks() {
+    const container = document.getElementById('todayTaskList');
+    if (!container) return;
+
+    const programType = mpUser.programType || 'standard';
+    const totalWeeks = programType === 'standard' ? 8 : 4;
+
+    // getDayTasks 함수 존재 확인
+    if (typeof getDayTasks !== 'function') {
+        container.innerHTML = '<p class="sc-sub">스케줄 데이터를 불러올 수 없습니다</p>';
+        return;
+    }
+
+    // 시작 전 체크
+    if (isBeforeStart()) {
+        const startStr = formatStartDate(mpUser.startDate);
+        container.innerHTML = `<p class="today-task-empty">📅 ${startStr}부터 시작됩니다!</p>`;
+        return;
+    }
+
+    // 오늘 날짜 계산 (새벽 4시 기준)
+    const now = new Date();
+    const effectiveToday = new Date(now);
+    if (now.getHours() < 4) effectiveToday.setDate(effectiveToday.getDate() - 1);
+    effectiveToday.setHours(0, 0, 0, 0);
+
+    const startDate = new Date(mpUser.startDate + 'T00:00:00');
+    if (isNaN(startDate.getTime())) {
+        container.innerHTML = '<p class="today-task-empty">시작일 정보 없음</p>';
+        return;
+    }
+
+    // 오늘이 몇 주차 무슨 요일인지 계산
+    const diffDays = Math.floor((effectiveToday - startDate) / (1000 * 60 * 60 * 24));
+    const dayOrder = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const weekNum = Math.floor(diffDays / 7) + 1;
+    const dayIndex = diffDays % 7;
+    const dayEn = dayOrder[dayIndex];
+
+    // 챌린지 종료 또는 토요일 체크
+    if (weekNum > totalWeeks || dayEn === 'saturday') {
+        container.innerHTML = '<p class="today-task-empty">오늘은 휴무입니다 😊</p>';
+        return;
+    }
+
+    // 오늘의 과제 목록 가져오기
+    const tasks = getDayTasks(programType, weekNum, dayEn);
+
+    if (!tasks || tasks.length === 0) {
+        container.innerHTML = '<p class="today-task-empty">오늘은 휴무입니다 😊</p>';
+        return;
+    }
+
+    // 과제명을 읽기 좋게 변환
+    const taskLabels = {
+        'reading': '📖 Reading',
+        'listening': '🎧 Listening',
+        'writing': '✍️ Writing',
+        'speaking': '🎤 Speaking',
+        'vocab': '📝 Vocab',
+        'intro-book': '📚 입문서'
+    };
+
+    let html = '<ul class="today-task-ul">';
+    tasks.forEach(taskName => {
+        const parsed = (typeof parseTaskName === 'function') ? parseTaskName(taskName) : null;
+        let label = taskName;
+        if (parsed && parsed.type !== 'unknown') {
+            const base = taskLabels[parsed.type] || parsed.type;
+            if (parsed.type === 'vocab') {
+                label = base;
+            } else if (parsed.type === 'intro-book') {
+                label = base;
+            } else {
+                const modNum = parsed.params ? (parsed.params.module || parsed.params.number || '') : '';
+                label = `${base} M${modNum}`;
+            }
+        }
+        html += `<li class="today-task-item">${label}</li>`;
+    });
+    html += '</ul>';
+    html += `<p class="today-task-count">총 ${tasks.length}건</p>`;
+
+    container.innerHTML = html;
+    console.log(`📝 [MyPage] 오늘의 과제 ${tasks.length}건 표시 (W${weekNum} ${dayEn})`);
+}
+
 // ================================================
 // ① 학습 현황 요약 카드 렌더링 (v2 — STUDENT_METRICS.md 기준)
 // ================================================
@@ -247,6 +350,7 @@ function renderSummaryCards() {
         document.getElementById('challengeStatus').textContent = `D-${daysLeft}`;
         document.getElementById('challengeBar').style.width = '0%';
         document.getElementById('challengeSub').textContent = `${startStr} 시작 예정`;
+        document.getElementById('challengeStartDate').textContent = `시작일: ${formatFullDate(mpUser.startDate)}`;
     } else {
         const dplus = Math.min(Math.floor((today - startDate) / (1000 * 60 * 60 * 24)), totalCalendarDays);
         const remainingDays = Math.max(0, totalCalendarDays - dplus);
@@ -254,6 +358,7 @@ function renderSummaryCards() {
         document.getElementById('challengeStatus').textContent = `D+${dplus} / ${totalCalendarDays}일`;
         document.getElementById('challengeBar').style.width = `${elapsedPct}%`;
         document.getElementById('challengeSub').textContent = `잔여 ${remainingDays}일`;
+        document.getElementById('challengeStartDate').textContent = `시작일: ${formatFullDate(mpUser.startDate)}`;
     }
 
     // ── 오늘까지 할당된 과제 수 계산 ──
@@ -294,14 +399,10 @@ function renderSummaryCards() {
     let authRatePct, authSubText;
     if (authDenominator > 0) {
         authRatePct = Math.round(authRateSum / authDenominator);
-        const fullAuthCount = mpV2Results.filter(r => {
-            if (r.section_type === 'vocab' || r.section_type === 'intro-book') return !!r.first_result_json;
-            return r.first_result_json && r.second_result_json && r.error_note_submitted;
-        }).length;
         if (tasksDueToday === 0) {
-            authSubText = `인증 ${fullAuthCount} / ${mpV2Results.length}건 (시작 전)`;
+            authSubText = `시작 전`;
         } else {
-            authSubText = `인증 ${fullAuthCount} / ${tasksDueToday}건`;
+            authSubText = `오늘까지 할당된 과제 ${tasksDueToday}건 기준`;
         }
     } else {
         authRatePct = 0;
