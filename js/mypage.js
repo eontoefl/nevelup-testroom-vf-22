@@ -84,7 +84,7 @@ async function loadAllData() {
     // V2 학습 결과 로드 (result_json은 대용량이므로 제외)
     mpV2Results = await supabaseSelect(
         'study_results_v2',
-        `user_id=eq.${userId}&order=created_at.desc&select=id,user_id,section_type,module_number,week,day,first_result_json,second_result_json,error_note_submitted,created_at,updated_at`
+        `user_id=eq.${userId}&order=completed_at.desc&select=id,user_id,section_type,module_number,week,day,first_result_json,second_result_json,error_note_submitted,completed_at`
     ) || [];
 
     // 등급/환급 기준표 로드
