@@ -557,11 +557,9 @@ class ModuleController {
     /**
      * 이전 컴포넌트로 이동 (Back 시 현재 컴포넌트 첫 문제에서 호출)
      * 
-     * ★ v3: ReviewPanel._answerStore 활용
-     *   1) 현재 컴포넌트의 답안을 _answerStore에 저장
-     *   2) 이전 컴포넌트 결과를 _answerStore에 저장 (pop 전)
-     *   3) componentResults/allAnswers를 prevIndex 지점까지 잘라내기
-     *   4) 이전 컴포넌트 재초기화 → _answerStore에서 복원
+     * ★ v5: 리뷰 패널과 동일한 방식으로 통일
+     *   - 기록을 자르지 않고, 백업(_answerStore)에서 처음부터 재구성
+     *   - 뒤로 갔다가 다시 앞으로 진행해도 중간 기록이 유실되지 않음
      */
     goToPreviousComponent() {
         if (this.currentComponentIndex <= 0) {
@@ -574,46 +572,62 @@ class ModuleController {
         
         console.log(`⬅️ [Nav] 이전 컴포넌트로 이동: ${prevComponent.type} (Set ${prevComponent.setId})`);
         
-        // ★ ReviewPanel._answerStore에 현재 + 이전 컴포넌트 답안 저장
+        // ★ ReviewPanel과 동일한 방식: 백업에서 처음부터 재구성
         const rp = typeof ReviewPanel !== 'undefined' ? ReviewPanel : null;
         if (rp) {
+            // 0. 현재 상태를 백업에 저장
             rp._syncAnswerStore(this);
-        }
-        
-        // ★ 이전 컴포넌트의 답안을 _answerStore에서 가져오기 (복원용)
-        let backedUpAnswers = null;
-        if (rp && rp._answerStore[prevIndex]) {
-            backedUpAnswers = JSON.parse(JSON.stringify(rp._answerStore[prevIndex].answers));
-            console.log(`💾 [Nav] _answerStore에서 답안 가져옴: ${backedUpAnswers.length}개`);
-        } else if (this.componentResults.length > prevIndex) {
-            // 폴백: componentResults에서 가져오기
-            const result = this.componentResults[prevIndex];
-            if (result && result.answers) {
-                backedUpAnswers = JSON.parse(JSON.stringify(result.answers));
-                console.log(`💾 [Nav] componentResults에서 답안 가져옴: ${backedUpAnswers.length}개`);
+            
+            // 1. 이전 컴포넌트의 답안 추출 (복원용)
+            const targetStore = rp._answerStore[prevIndex];
+            const savedAnswers = targetStore ? JSON.parse(JSON.stringify(targetStore.answers)) : [];
+            console.log(`💾 [Nav] _answerStore에서 답안 가져옴: ${savedAnswers.length}개`);
+            
+            // 2. componentResults / allAnswers를 처음부터 재구성 (자르지 않음)
+            this.componentResults = [];
+            this.allAnswers = [];
+            
+            for (let i = 0; i < prevIndex; i++) {
+                const comp = this.config.components[i];
+                const store = rp._answerStore[i];
+                
+                if (store && store.answers && store.answers.length > 0) {
+                    this.componentResults.push({
+                        componentType: comp.type,
+                        setId: comp.setId,
+                        answers: JSON.parse(JSON.stringify(store.answers))
+                    });
+                    this.allAnswers.push(...JSON.parse(JSON.stringify(store.answers)));
+                    console.log(`📋 [Nav] comp[${i}] ${comp.type} 복원 완료 - 답안 ${store.answers.length}개`);
+                } else {
+                    this.componentResults.push({
+                        componentType: comp.type,
+                        setId: comp.setId,
+                        answers: []
+                    });
+                    console.log(`📋 [Nav] comp[${i}] ${comp.type} 답안 없음 - 빈 결과 삽입`);
+                }
             }
+            
+            console.log(`📋 [Nav] componentResults ${this.componentResults.length}개 복원, allAnswers ${this.allAnswers.length}개 복원`);
+            
+            // 3. 컴포넌트 인덱스 되돌리기
+            this.currentComponentIndex = prevIndex;
+            this.currentQuestionNumber = this.allAnswers.length;
+            
+            // 4. 이전 컴포넌트의 마지막 문제로 로드
+            this.loadPreviousComponentAtLastQuestion(prevComponent, savedAnswers);
+        } else {
+            // ReviewPanel이 없는 경우 (폴백)
+            console.warn('⚠️ [Nav] ReviewPanel 없음 - 기본 방식으로 이전 컴포넌트 이동');
+            this.currentComponentIndex = prevIndex;
+            let answersBeforePrev = 0;
+            for (let i = 0; i < prevIndex; i++) {
+                answersBeforePrev += this.config.components[i].questionsPerSet;
+            }
+            this.currentQuestionNumber = answersBeforePrev;
+            this.loadPreviousComponentAtLastQuestion(prevComponent, null);
         }
-        
-        // componentResults / allAnswers를 prevIndex 지점까지 잘라내기
-        if (this.componentResults.length > prevIndex) {
-            this.componentResults.splice(prevIndex);
-            console.log(`🗑️ [Nav] componentResults를 ${prevIndex}개로 잘라냄`);
-        }
-        let answersBeforePrev = 0;
-        for (let i = 0; i < prevIndex; i++) {
-            answersBeforePrev += this.config.components[i].questionsPerSet;
-        }
-        if (this.allAnswers.length > answersBeforePrev) {
-            this.allAnswers.splice(answersBeforePrev);
-            console.log(`🗑️ [Nav] allAnswers를 ${answersBeforePrev}개로 잘라냄`);
-        }
-        
-        // 컴포넌트 인덱스 되돌리기
-        this.currentComponentIndex = prevIndex;
-        this.currentQuestionNumber = answersBeforePrev;
-        
-        // 이전 컴포넌트의 마지막 문제로 로드
-        this.loadPreviousComponentAtLastQuestion(prevComponent, backedUpAnswers);
     }
     
     /**

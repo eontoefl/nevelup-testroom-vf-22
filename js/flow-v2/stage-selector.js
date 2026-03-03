@@ -162,6 +162,9 @@ function backToStageSelect() {
     if (screen) screen.style.display = 'block';
     // DB에서 최신 상태 다시 읽기
     StageSelector._loadFromDB();
+    
+    // ★ 리뷰 버튼 숨김 (풀이 종료)
+    if (typeof ReviewPanel !== 'undefined') ReviewPanel.updateButtonVisibility();
 }
 
 // ========================================
@@ -226,6 +229,9 @@ async function startFirstAttemptV2() {
     // 2. ModuleController 생성 (리딩/리스닝)
     const controller = new ModuleController(moduleConfig);
     window.moduleController = controller;
+    
+    // ★ 리뷰 버튼 표시 (1차 풀이 시작)
+    if (typeof ReviewPanel !== 'undefined') ReviewPanel.updateButtonVisibility();
     
     // 3. 다 풀면 → 결과 화면 표시 → 과제 화면 복귀
     controller.setOnComplete(function(result) {
@@ -634,6 +640,9 @@ async function startSecondAttemptV2() {
     // RetakeController 생성 및 시작
     const retakeCtrl = new RetakeController(sectionType, firstResult);
     window.retakeController = retakeCtrl;
+    
+    // ★ 리뷰 버튼 숨김 (2차 풀이 시작)
+    if (typeof ReviewPanel !== 'undefined') ReviewPanel.updateButtonVisibility();
     
     // showSecondResultScreen 오버라이드 — 2차 결과 표시 후 "과제 화면으로" 버튼 추가
     const originalShowResult = retakeCtrl.showSecondResultScreen.bind(retakeCtrl);
