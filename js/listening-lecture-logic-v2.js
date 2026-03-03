@@ -9,6 +9,17 @@ let currentLectureComponent = null;
 
 async function initLectureComponent(setId, onCompleteCallback) {
     console.log(`📦 [모듈] initLectureComponent - setId: ${setId}`);
+    
+    // 기존 컴포넌트 정리
+    if (currentLectureComponent) {
+        console.log(`🧹 [모듈] 이전 Lecture Component 정리`);
+        currentLectureComponent._destroyed = true;
+        if (currentLectureComponent.cleanup) {
+            currentLectureComponent.cleanup();
+        }
+        currentLectureComponent = null;
+    }
+    
     currentLectureComponent = new LectureComponent(setId, {
         onComplete: (results) => {
             console.log(`✅ [모듈] Lecture Component 완료`);

@@ -17,6 +17,17 @@ let currentResponseComponent = null;
  */
 async function initResponseComponent(setId, onCompleteCallback) {
     console.log(`📦 [모듈] initResponseComponent - setId: ${setId}`);
+    
+    // 기존 컴포넌트 정리
+    if (currentResponseComponent) {
+        console.log(`🧹 [모듈] 이전 Response Component 정리`);
+        currentResponseComponent._destroyed = true;
+        if (currentResponseComponent.cleanup) {
+            currentResponseComponent.cleanup();
+        }
+        currentResponseComponent = null;
+    }
+    
     currentResponseComponent = new ResponseComponent(setId, {
         onComplete: (results) => {
             console.log(`✅ [모듈] Response Component 완료`);
