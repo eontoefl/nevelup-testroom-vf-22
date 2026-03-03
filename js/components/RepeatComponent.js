@@ -25,12 +25,6 @@ class RepeatComponent {
         // 1. 데이터 처리 (6개)
         // ============================================
         
-        // Google Sheet 설정
-        this.REPEAT_SHEET_CONFIG = {
-            spreadsheetId: '1wuZ8riC-foWRMQosuCgyZIE9ZdsElZIuhPqFMGhuUQM',
-            sheetGid: '0'
-        };
-        
         // 데이터 저장
         this.speakingRepeatData = null;
         
@@ -61,32 +55,15 @@ class RepeatComponent {
     async loadRepeatData() {
         console.log('📥 [Repeat] 데이터 로드 시작...');
         
-        // 1) Supabase 우선 시도
+        // Supabase에서 로드
         const supabaseResult = await this._loadFromSupabase();
         if (supabaseResult) {
             this.speakingRepeatData = supabaseResult;
             return supabaseResult;
         }
         
-        // 2) Google Sheets 폴백
-        console.log('🔄 [Repeat] Google Sheets 폴백 시도...');
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${this.REPEAT_SHEET_CONFIG.spreadsheetId}/export?format=csv&gid=${this.REPEAT_SHEET_CONFIG.sheetGid}`;
-        
-        try {
-            const response = await fetch(csvUrl);
-            if (!response.ok) throw new Error('CSV 로드 실패');
-            
-            const csvText = await response.text();
-            this.speakingRepeatData = this.parseRepeatCSV(csvText);
-            
-            console.log('✅ [Repeat] Google Sheets 데이터 로드 성공:', this.speakingRepeatData);
-            return this.speakingRepeatData;
-        } catch (error) {
-            console.error('❌ [Repeat] 데이터 로드 실패:', error);
-            console.log('📦 Demo 데이터 사용');
-            this.speakingRepeatData = this.getRepeatDemoData();
-            return this.speakingRepeatData;
-        }
+        console.error('❌ [Repeat] 데이터를 불러올 수 없습니다.');
+        return null;
     }
     
     // --- Supabase에서 로드 ---
@@ -136,172 +113,6 @@ class RepeatComponent {
             console.error('❌ [Repeat] Supabase 로드 실패:', error);
             return null;
         }
-    }
-    
-    /**
-     * CSV 파싱
-     */
-    parseRepeatCSV(csvText) {
-        console.log('🔄 [Repeat] CSV 파싱 시작...');
-        
-        const lines = csvText.split('\n');
-        const sets = [];
-        
-        console.log('📊 [CSV 파싱] 총 라인 수:', lines.length);
-        
-        for (let i = 1; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line) continue;
-            
-            const columns = this.parseCSVLine(line);
-            console.log(`📊 [CSV 파싱] Line ${i} 컬럼 수: ${columns.length}`);
-            
-            if (columns.length < 39) {
-                console.warn(`⚠️ [CSV 파싱] Line ${i} 스킵: 컬럼 수 부족 (${columns.length}/39)`);
-                continue;
-            }
-            
-            // 나레이션 (인트로)
-            const narration = {
-                audio: columns[2] ? columns[2].trim() : '',
-                baseImage: columns[3] ? columns[3].trim() : ''
-            };
-            
-            // 7개 오디오
-            const audios = [];
-            for (let n = 0; n < 7; n++) {
-                const baseIndex = 4 + (n * 5);
-                audios.push({
-                    audio: columns[baseIndex] ? columns[baseIndex].trim() : '',
-                    image: columns[baseIndex + 1] ? columns[baseIndex + 1].trim() : '',
-                    script: columns[baseIndex + 2] ? columns[baseIndex + 2].trim() : '',
-                    translation: columns[baseIndex + 3] ? columns[baseIndex + 3].trim() : '',
-                    responseTime: columns[baseIndex + 4] ? parseInt(columns[baseIndex + 4].trim()) : 10
-                });
-            }
-            
-            const set = {
-                id: columns[0].trim(),
-                contextText: columns[1].trim(),
-                narration: narration,
-                audios: audios
-            };
-            
-            sets.push(set);
-            console.log('[Repeat] 세트 추가:', set.id);
-        }
-        
-        console.log(`✅ [CSV 파싱] 총 세트 개수: ${sets.length}`);
-        
-        if (sets.length === 0) {
-            console.warn('⚠️ [CSV 파싱] 파싱된 데이터 없음, 데모 데이터 사용');
-            return this.getRepeatDemoData();
-        }
-        
-        return {
-            type: 'speaking_repeat',
-            sets: sets
-        };
-    }
-    
-    /**
-     * CSV 한 줄 파싱 (쉼표+따옴표 처리)
-     */
-    parseCSVLine(line) {
-        const result = [];
-        let current = '';
-        let inQuotes = false;
-        
-        for (let i = 0; i < line.length; i++) {
-            const char = line[i];
-            const nextChar = line[i + 1];
-            
-            if (char === '"') {
-                if (inQuotes && nextChar === '"') {
-                    current += '"';
-                    i++;
-                } else {
-                    inQuotes = !inQuotes;
-                }
-            } else if (char === ',' && !inQuotes) {
-                result.push(current);
-                current = '';
-            } else {
-                current += char;
-            }
-        }
-        result.push(current);
-        return result;
-    }
-    
-    /**
-     * Demo 데이터 (로드 실패 시 대체)
-     */
-    getRepeatDemoData() {
-        return {
-            type: 'speaking_repeat',
-            sets: [
-                {
-                    id: 'speaking_repeat_1',
-                    contextText: 'You are learning to welcome visitors to the zoo. Listen to your manager and repeat what she says. Repeat only once.',
-                    narration: {
-                        audio: 'https://eontoefl.github.io/toefl-audio/speaking/repeat/narration/context_audio.mp3',
-                        baseImage: 'https://eontoefl.github.io/toefl-audio/speaking/repeat/image/zoo_illustration.png'
-                    },
-                    audios: [
-                        { 
-                            audio: 'https://eontoefl.github.io/toefl-audio/speaking/repeat/audio/narration1.mp3',
-                            image: 'https://eontoefl.github.io/toefl-audio/speaking/repeat/image/zoo_illustration.png',
-                            script: 'Welcome to our zoo!',
-                            translation: '우리 동물원에 오신 것을 환영합니다!',
-                            responseTime: 8
-                        },
-                        { 
-                            audio: 'https://eontoefl.github.io/toefl-audio/speaking/repeat/audio/narration2.mp3',
-                            image: 'https://eontoefl.github.io/toefl-audio/speaking/repeat/image/zoo_illustration.png',
-                            script: 'Today we have special events for families.',
-                            translation: '오늘 가족을 위한 특별한 행사가 있습니다.',
-                            responseTime: 10
-                        },
-                        { 
-                            audio: 'https://eontoefl.github.io/toefl-audio/speaking/repeat/audio/narration3.mp3',
-                            image: 'https://eontoefl.github.io/toefl-audio/speaking/repeat/image/zoo_illustration.png',
-                            script: 'Please enjoy your visit and feel free to ask any questions.',
-                            translation: '방문을 즐기시고 궁금한 점이 있으면 언제든지 물어보세요.',
-                            responseTime: 12
-                        },
-                        { 
-                            audio: 'https://eontoefl.github.io/toefl-audio/speaking/repeat/audio/narration4.mp3',
-                            image: 'https://eontoefl.github.io/toefl-audio/speaking/repeat/image/zoo_illustration.png',
-                            script: 'The penguin feeding show starts at two o\'clock.',
-                            translation: '펭귄 먹이 주기 쇼는 2시에 시작합니다.',
-                            responseTime: 10
-                        },
-                        { 
-                            audio: 'https://eontoefl.github.io/toefl-audio/speaking/repeat/audio/narration5.mp3',
-                            image: 'https://eontoefl.github.io/toefl-audio/speaking/repeat/image/zoo_illustration.png',
-                            script: 'Don\'t forget to visit our new tropical rainforest exhibit.',
-                            translation: '새로운 열대우림 전시관 방문을 잊지 마세요.',
-                            responseTime: 12
-                        },
-                        { 
-                            audio: 'https://eontoefl.github.io/toefl-audio/speaking/repeat/audio/narration6.mp3',
-                            image: 'https://eontoefl.github.io/toefl-audio/speaking/repeat/image/zoo_illustration.png',
-                            script: 'We hope you have a wonderful time here today.',
-                            translation: '오늘 여기서 즐거운 시간 보내시길 바랍니다.',
-                            responseTime: 10
-                        },
-                        { 
-                            audio: 'https://eontoefl.github.io/toefl-audio/speaking/repeat/audio/narration7.mp3',
-                            image: 'https://eontoefl.github.io/toefl-audio/speaking/repeat/image/zoo_illustration.png',
-                            script: 'Thank you for choosing our zoo.',
-                            translation: '저희 동물원을 선택해 주셔서 감사합니다.',
-                            responseTime: 8
-                        }
-                    ]
-                }
-            ]
-        };
     }
     
     // ============================================

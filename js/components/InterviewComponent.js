@@ -27,12 +27,6 @@ class InterviewComponent {
         // 1. 데이터 처리 (7개)
         // ============================================
         
-        // Google Sheet 설정
-        this.INTERVIEW_SHEET_CONFIG = {
-            spreadsheetId: '1wuZ8riC-foWRMQosuCgyZIE9ZdsElZIuhPqFMGhuUQM',
-            sheetGid: '928002984'
-        };
-        
         // 데이터 저장
         this.speakingInterviewData = null;
         this._destroyed = false; // cleanup 호출 시 true로 설정
@@ -80,32 +74,15 @@ class InterviewComponent {
     async loadInterviewData() {
         console.log('📥 [Interview] 데이터 로드 시작...');
         
-        // 1) Supabase 우선 시도
+        // Supabase에서 로드
         const supabaseResult = await this._loadFromSupabase();
         if (supabaseResult) {
             this.speakingInterviewData = supabaseResult;
             return supabaseResult;
         }
         
-        // 2) Google Sheets 폴백
-        console.log('🔄 [Interview] Google Sheets 폴백 시도...');
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${this.INTERVIEW_SHEET_CONFIG.spreadsheetId}/export?format=csv&gid=${this.INTERVIEW_SHEET_CONFIG.sheetGid}`;
-        
-        try {
-            const response = await fetch(csvUrl);
-            if (!response.ok) throw new Error('CSV 로드 실패');
-            
-            const csvText = await response.text();
-            this.speakingInterviewData = this.parseInterviewCSV(csvText);
-            
-            console.log('✅ [Interview] Google Sheets 데이터 로드 성공:', this.speakingInterviewData);
-            return this.speakingInterviewData;
-        } catch (error) {
-            console.error('❌ [Interview] 데이터 로드 실패:', error);
-            console.log('📦 Demo 데이터 사용');
-            this.speakingInterviewData = this.getInterviewDemoData();
-            return this.speakingInterviewData;
-        }
+        console.error('❌ [Interview] 데이터를 불러올 수 없습니다.');
+        return null;
     }
     
     // --- Supabase에서 로드 ---
@@ -155,89 +132,6 @@ class InterviewComponent {
             console.error('❌ [Interview] Supabase 로드 실패:', error);
             return null;
         }
-    }
-    
-    /**
-     * CSV 파싱
-     */
-    parseInterviewCSV(csvText) {
-        console.log('🔄 [Interview] CSV 파싱 시작...');
-        
-        const lines = csvText.split('\n');
-        const sets = [];
-        
-        for (let i = 1; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line) continue;
-            
-            const columns = this.parseCSVLine(line);
-            if (columns.length < 34) continue;
-            
-            // 각 비디오별 데이터 파싱 (4개)
-            const videos = [];
-            for (let v = 0; v < 4; v++) {
-                const baseIdx = 5 + (v * 7);
-                videos.push({
-                    video: columns[baseIdx].trim(),
-                    script: columns[baseIdx + 1].trim(),
-                    translation: columns[baseIdx + 2].trim(),
-                    modelAnswer: columns[baseIdx + 3].trim(),
-                    modelAnswerTranslation: columns[baseIdx + 4].trim(),
-                    modelAnswerAudio: columns[baseIdx + 5].trim(),
-                    highlights: this.parseHighlights(columns[baseIdx + 6] ? columns[baseIdx + 6].trim() : '{}')
-                });
-            }
-            
-            const set = {
-                id: columns[0].trim(),
-                contextText: columns[1].trim(),
-                contextTranslation: columns[2].trim(),
-                contextAudio: columns[3].trim(),
-                contextImage: columns[4].trim(),
-                noddingVideo: columns[33].trim(),
-                videos: videos
-            };
-            
-            sets.push(set);
-            console.log('[Interview] 세트 추가:', set.id);
-        }
-        
-        console.log(`✅ [CSV 파싱] 총 세트 개수: ${sets.length}`);
-        
-        return {
-            type: 'speaking_interview',
-            sets: sets
-        };
-    }
-    
-    /**
-     * CSV 한 줄 파싱 (쉼표+따옴표 처리)
-     */
-    parseCSVLine(line) {
-        const result = [];
-        let current = '';
-        let inQuotes = false;
-        
-        for (let i = 0; i < line.length; i++) {
-            const char = line[i];
-            const nextChar = line[i + 1];
-            
-            if (char === '"') {
-                if (inQuotes && nextChar === '"') {
-                    current += '"';
-                    i++;
-                } else {
-                    inQuotes = !inQuotes;
-                }
-            } else if (char === ',' && !inQuotes) {
-                result.push(current);
-                current = '';
-            } else {
-                current += char;
-            }
-        }
-        result.push(current);
-        return result;
     }
     
     /**
@@ -296,63 +190,6 @@ class InterviewComponent {
             console.error('❌ 원본 데이터:', highlightsStr);
             return {};
         }
-    }
-    
-    /**
-     * Demo 데이터 (로드 실패 시 대체)
-     */
-    getInterviewDemoData() {
-        return {
-            type: 'speaking_interview',
-            sets: [
-                {
-                    id: 'speaking_interview_1',
-                    contextText: 'You have volunteered for a research study about commuting habits. You will have a short online interview with a researcher. The researcher will ask you some questions.',
-                    contextTranslation: '당신은 통근 습관에 관한 연구에 자원했습니다. 연구원과 짧은 온라인 인터뷰를 하게 됩니다.',
-                    contextAudio: 'PLACEHOLDER',
-                    contextImage: 'https://via.placeholder.com/600x400/e3f2fd/1976d2?text=Researcher',
-                    noddingVideo: 'https://via.placeholder.com/600x400/4caf50/ffffff?text=Nodding',
-                    videos: [
-                        {
-                            video: 'PLACEHOLDER',
-                            script: 'How do you usually get to school or work?',
-                            translation: '보통 어떻게 학교나 직장에 가나요?',
-                            modelAnswer: 'Um... I usually take the bus.\nIt takes about 30 minutes.\nSometimes I drive if I\'m late.',
-                            modelAnswerTranslation: '음... 저는 보통 버스를 타요.\n약 30분 걸려요.\n가끔 늦으면 운전해요.',
-                            modelAnswerAudio: 'PLACEHOLDER',
-                            highlights: {}
-                        },
-                        {
-                            video: 'PLACEHOLDER',
-                            script: 'What do you like about your commute?',
-                            translation: '통근에서 좋은 점은 무엇인가요?',
-                            modelAnswer: 'Well, I like that I can read.\nOr I listen to music.\nIt\'s relaxing time for me.',
-                            modelAnswerTranslation: '음, 책을 읽을 수 있어서 좋아요.\n또는 음악을 들어요.\n저에게는 휴식 시간이에요.',
-                            modelAnswerAudio: 'PLACEHOLDER',
-                            highlights: {}
-                        },
-                        {
-                            video: 'PLACEHOLDER',
-                            script: 'Is there anything you would change?',
-                            translation: '바꾸고 싶은 점이 있나요?',
-                            modelAnswer: 'I wish it was faster.\nThe bus is often crowded.\nMaybe I should bike instead.',
-                            modelAnswerTranslation: '더 빨랐으면 좋겠어요.\n버스가 자주 붐벼요.\n자전거를 타야 할 것 같아요.',
-                            modelAnswerAudio: 'PLACEHOLDER',
-                            highlights: {}
-                        },
-                        {
-                            video: 'PLACEHOLDER',
-                            script: 'Thank you for your time.',
-                            translation: '시간 내주셔서 감사합니다.',
-                            modelAnswer: 'You\'re welcome.\nThank you too.\nHave a great day!',
-                            modelAnswerTranslation: '천만에요.\n저도 감사해요.\n좋은 하루 보내세요!',
-                            modelAnswerAudio: 'PLACEHOLDER',
-                            highlights: {}
-                        }
-                    ]
-                }
-            ]
-        };
     }
     
     // ============================================
