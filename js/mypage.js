@@ -704,23 +704,35 @@ let scoreChartInstance = null;  // Chart.js 인스턴스
 let currentScoreTab = 'reading'; // 현재 활성 탭
 
 /**
- * score 문자열("3/5") → 정답률(60) 변환
- * JSON 객체 또는 null 입력 허용
+ * result_json → 정답률(0~100) 변환
+ * answers 배열의 isCorrect를 세서 계산
+ * 문자열/객체 모두 허용, null 안전
  */
 function parseScore(resultJson) {
     if (!resultJson) return null;
-    // resultJson이 문자열이면 파싱
+    // 문자열이면 파싱
     let obj = resultJson;
     if (typeof obj === 'string') {
         try { obj = JSON.parse(obj); } catch(e) { return null; }
     }
-    if (!obj.score) return null;
-    const parts = String(obj.score).split('/');
-    if (parts.length !== 2) return null;
-    const got = parseFloat(parts[0]);
-    const total = parseFloat(parts[1]);
-    if (isNaN(got) || isNaN(total) || total === 0) return null;
-    return Math.round((got / total) * 100);
+    // 방법1: answers 배열에서 isCorrect 카운트
+    if (Array.isArray(obj.answers) && obj.answers.length > 0) {
+        const total = obj.answers.length;
+        const correct = obj.answers.filter(a => a.isCorrect === true).length;
+        return Math.round((correct / total) * 100);
+    }
+    // 방법2: score 문자열("3/5") 폴백
+    if (obj.score) {
+        const parts = String(obj.score).split('/');
+        if (parts.length === 2) {
+            const got = parseFloat(parts[0]);
+            const total = parseFloat(parts[1]);
+            if (!isNaN(got) && !isNaN(total) && total > 0) {
+                return Math.round((got / total) * 100);
+            }
+        }
+    }
+    return null;
 }
 
 /**
