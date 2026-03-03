@@ -717,7 +717,7 @@ function _getFirstStartGuide(sectionType) {
                 icon: '📖',
                 title: '1차 풀이를 시작합니다',
                 desc: '총 <b>35문제</b>입니다.<br>집중해서 풀어주세요.',
-                notice: '풀이 중에는 이전 문제로 돌아갈 수 없습니다.',
+                notice: '',
                 btn: '시작하기',
                 theme: 'theme-purple'
             };
@@ -764,7 +764,7 @@ function _getSecondStartGuide(sectionType) {
                 icon: '🔄',
                 title: '2차 풀이를 시작합니다',
                 desc: '1차에서 <b>틀린 문제만</b> 다시 풀어주세요.',
-                notice: '이미 맞힌 문제는 다시 선택하지 않아도 됩니다.<br>음원은 <b>1회만</b> 재생됩니다.',
+                notice: '이미 맞힌 문제는 다시 선택하지 않아도 됩니다.',
                 btn: '시작하기',
                 theme: 'theme-blue'
             };
