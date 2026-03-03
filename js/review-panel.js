@@ -982,14 +982,15 @@ const ReviewPanel = {
      */
     updateButtonVisibility() {
         const buttons = document.querySelectorAll('.review-btn');
-        const fc = window.FlowController;
         
         const mc = window.moduleController;
-        const sectionType = mc?.config?.sectionType || (fc && fc.sectionType);
-        const attemptNumber = (fc && fc.currentAttemptNumber) || 1;
+        const sectionType = mc?.config?.sectionType || '';
+        
+        // V2: RetakeController가 돌고 있으면 2차 풀이, 없으면 1차 풀이
+        const isSecondAttempt = !!window.retakeController;
         
         const shouldShow = mc && 
-                          attemptNumber === 1 &&
+                          !isSecondAttempt &&
                           (sectionType === 'reading' || sectionType === 'listening');
 
         buttons.forEach(btn => {
@@ -1002,19 +1003,7 @@ const ReviewPanel = {
 window.openReviewPanel = function() { ReviewPanel.open(); };
 window.closeReviewPanel = function() { ReviewPanel.close(); };
 
-// Review 버튼 자동 표시/숨김 감시
-(function() {
-    let lastModuleController = null;
-    
-    setInterval(() => {
-        const mc = window.moduleController;
-        const fc = window.FlowController;
-        
-        if (mc !== lastModuleController) {
-            lastModuleController = mc;
-            ReviewPanel.updateButtonVisibility();
-        }
-    }, 500);
-})();
+// Review 버튼 표시/숨김 — 외부에서 호출하는 방식 (타이머 제거)
+// stage-selector.js 등에서 풀이 시작/종료 시점에 ReviewPanel.updateButtonVisibility() 호출
 
 console.log('✅ review-panel.js v3 로드 완료');
