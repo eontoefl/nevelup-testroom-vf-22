@@ -42,6 +42,17 @@ async function testRepeatResultScreen() {
 // ============================================
 async function initRepeatComponent(setId, onCompleteCallback) {
     console.log(`📦 [모듈] initRepeatComponent - setId: ${setId}`);
+    
+    // ★ 이전 컴포넌트가 있으면 정리 후 제거
+    if (currentRepeatComponent) {
+        console.log(`🧹 [모듈] 이전 Repeat Component 정리`);
+        if (typeof currentRepeatComponent.cleanup === 'function') {
+            currentRepeatComponent.cleanup();
+        }
+        currentRepeatComponent = null;
+        window.currentRepeatComponent = null;
+    }
+    
     currentRepeatComponent = new RepeatComponent();
     window.currentRepeatComponent = currentRepeatComponent;
     

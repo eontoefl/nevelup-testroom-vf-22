@@ -42,6 +42,17 @@ async function testInterviewResultScreen() {
 // ============================================
 async function initInterviewComponent(setId, onCompleteCallback) {
     console.log(`📦 [모듈] initInterviewComponent - setId: ${setId}`);
+    
+    // ★ 이전 컴포넌트가 있으면 정리 후 제거
+    if (currentInterviewComponent) {
+        console.log(`🧹 [모듈] 이전 Interview Component 정리`);
+        if (typeof currentInterviewComponent.cleanup === 'function') {
+            currentInterviewComponent.cleanup();
+        }
+        currentInterviewComponent = null;
+        window.currentInterviewComponent = null;
+    }
+    
     currentInterviewComponent = new InterviewComponent();
     window.currentInterviewComponent = currentInterviewComponent;
     
