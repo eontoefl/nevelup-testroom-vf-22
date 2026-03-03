@@ -69,12 +69,7 @@ class ConverComponent {
     // 나레이션 URL (고정)
     this.NARRATION_URL = 'https://eontoefl.github.io/toefl-audio/listening/conversation/narration/conversation_narration.mp3';
     
-    // Google Sheets 설정
-    this.SHEET_CONFIG = {
-      spreadsheetId: '1srFVmFnRa8A73isTO_Vk3yfU1bQWVroHUui8XvYf9e0',
-      sheetGid: '1189725287'
-    };
-  }
+
 
   /**
    * 초기화 - 데이터 로드 및 인트로 시작
@@ -130,35 +125,9 @@ class ConverComponent {
       return supabaseResult;
     }
     
-    // 2) Google Sheets 폴백
-    console.log('🔄 [ConverComponent] Google Sheets 폴백 시도...');
-    try {
-      const csvUrl = `https://docs.google.com/spreadsheets/d/${this.SHEET_CONFIG.spreadsheetId}/export?format=csv&gid=${this.SHEET_CONFIG.sheetGid}`;
-      console.log('[ConverComponent] CSV URL:', csvUrl);
-      
-      const response = await fetch(csvUrl);
-      console.log('[ConverComponent] Response status:', response.status);
-      
-      if (!response.ok) {
-        console.warn('[ConverComponent] HTTP 에러, 데모 데이터 사용');
-        return this.getDemoData();
-      }
-      
-      const csvText = await response.text();
-      const parsedData = this.parseCSV(csvText);
-      
-      if (!parsedData || !parsedData.sets || parsedData.sets.length === 0) {
-        console.warn('[ConverComponent] CSV 파싱 실패, 데모 데이터 사용');
-        return this.getDemoData();
-      }
-      
-      console.log('[ConverComponent] Google Sheets 데이터 로드 성공:', parsedData.sets.length, '개 세트');
-      cachedConverData = parsedData;
-      return parsedData;
-    } catch (error) {
-      console.error('[ConverComponent] 데이터 로드 실패:', error);
-      return this.getDemoData();
-    }
+    // Supabase 로드 실패 시 데이터 없음 처리
+    console.error('[ConverComponent] Supabase 데이터 로드 실패');
+    return null;
   }
 
   // --- Supabase에서 로드 ---
@@ -238,162 +207,6 @@ class ConverComponent {
   /**
    * CSV 파싱
    */
-  parseCSV(csvText) {
-    console.log('[ConverComponent] CSV 파싱 시작');
-    
-    const lines = csvText.trim().split('\n');
-    const sets = [];
-    
-    // 첫 줄이 헤더인지 확인
-    const firstLine = this.parseCSVLine(lines[0]);
-    const hasHeader = !firstLine[0].startsWith('listening_conver_');
-    const startIndex = hasHeader ? 1 : 0;
-    
-    console.log(`[ConverComponent] 헤더 존재: ${hasHeader}, 시작 인덱스: ${startIndex}`);
-    
-    for (let i = startIndex; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-      
-      const values = this.parseCSVLine(line);
-      
-      if (values.length < 34) {
-        console.warn(`[ConverComponent] Line ${i} 건너뜀: 열 부족 (${values.length}/34)`);
-        continue;
-      }
-      
-      const rawSetId = values[0].trim();
-      
-      if (!rawSetId) {
-        console.warn(`[ConverComponent] Line ${i}: 빈 Set ID, 건너뜀`);
-        continue;
-      }
-      
-      // ID 정규화: conversation_set_0001 형식 그대로 사용
-      let setId = rawSetId;
-      if (/^\d+$/.test(rawSetId)) {
-        // 순수 숫자: "1" → "conversation_set_0001"
-        setId = `conversation_set_${String(rawSetId).padStart(4, '0')}`;
-      }
-      // 다른 형식은 그대로 사용
-      
-      console.log(`[ConverComponent] ID 정규화: "${rawSetId}" → "${setId}"`);
-      
-      const audioUrl = values[1];
-      const script = values[2] || '';
-      const scriptTrans = values[3] || '';
-      
-      // scriptHighlights 파싱 (## 구분자)
-      let scriptHighlights = [];
-      if (values[34] && values[34].trim()) {
-        const highlightStr = values[34].trim();
-        const items = highlightStr.split('##');
-        
-        items.forEach(item => {
-          const parts = item.split('::');
-          if (parts.length >= 3) {
-            scriptHighlights.push({
-              word: parts[0].trim(),
-              translation: parts[1].trim(),
-              explanation: parts[2].trim()
-            });
-          }
-        });
-      }
-      
-      // 문제 1
-      const q1 = {
-        question: values[4],
-        questionTrans: values[5],
-        options: [values[6], values[7], values[8], values[9]],
-        answer: parseInt(values[10]) || 1,
-        optionTranslations: [values[11], values[12], values[13], values[14]],
-        optionExplanations: [values[15], values[16], values[17], values[18]]
-      };
-      
-      // 문제 2
-      const q2 = {
-        question: values[19],
-        questionTrans: values[20],
-        options: [values[21], values[22], values[23], values[24]],
-        answer: parseInt(values[25]) || 1,
-        optionTranslations: [values[26], values[27], values[28], values[29]],
-        optionExplanations: [values[30], values[31], values[32], values[33]]
-      };
-      
-      sets.push({
-        id: setId,
-        audioUrl: audioUrl,
-        script: script,
-        scriptTrans: scriptTrans,
-        scriptHighlights: scriptHighlights,
-        questions: [q1, q2]
-      });
-      
-      console.log(`[ConverComponent] 세트 추가: ${setId}`);
-    }
-    
-    // ✅ Set ID 기준으로 정렬 (conversation_set_0001, conversation_set_0002, ...)
-    console.log('🔄 [ConverComponent] 정렬 전 순서:', sets.map(s => s.id));
-    
-    sets.sort((a, b) => {
-      const numA = parseInt(a.id.replace(/\D/g, ''));
-      const numB = parseInt(b.id.replace(/\D/g, ''));
-      console.log(`  비교: ${a.id} (${numA}) vs ${b.id} (${numB}) → ${numA - numB}`);
-      return numA - numB;
-    });
-    
-    console.log('✅ [ConverComponent] 정렬 후 순서:', sets.map(s => s.id));
-    
-    // 디버깅: 최종 데이터 검증
-    sets.forEach((set, idx) => {
-      console.log(`  [${idx}] ${set.id} - ${set.questions.length}문제`);
-    });
-    
-    console.log(`[ConverComponent] CSV 파싱 완료: ${sets.length}개 세트`);
-    
-    return {
-      type: 'listening_conver',
-      timeLimit: this.TIME_LIMIT,
-      sets: sets
-    };
-  }
-
-  /**
-   * CSV 라인 파싱 (쉼표 + 따옴표 처리)
-   */
-  parseCSVLine(line) {
-    const result = [];
-    let current = '';
-    let inQuotes = false;
-    let i = 0;
-    
-    while (i < line.length) {
-      const char = line[i];
-      
-      if (char === '"') {
-        if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
-          current += '"';
-          i += 2;
-          continue;
-        } else {
-          inQuotes = !inQuotes;
-          i++;
-        }
-      } else if (char === ',' && !inQuotes) {
-        result.push(current.trim());
-        current = '';
-        i++;
-      } else {
-        current += char;
-        i++;
-      }
-    }
-    
-    result.push(current.trim());
-    return result;
-  }
-
   /**
    * 세트 인덱스 찾기
    */
@@ -901,9 +714,6 @@ class ConverComponent {
     
     console.log('[ConverComponent] 채점 완료:', results);
     
-    // sessionStorage 저장
-    sessionStorage.setItem('converResults', JSON.stringify([results]));
-    
     // 완료 콜백
     if (this.onComplete) {
       this.onComplete(results);
@@ -915,49 +725,6 @@ class ConverComponent {
   /**
    * 데모 데이터
    */
-  getDemoData() {
-    return {
-      type: 'listening_conver',
-      timeLimit: 20,
-      sets: [
-        {
-          id: 'listening_conver_1',
-          audioUrl: '',
-          script: 'Man: Hey, did you finish the assignment for Professor Smith?\nWoman: Not yet, I\'m still working on it. It\'s due tomorrow, right?',
-          scriptTrans: '남자: 저기, 스미스 교수님 과제 끝냈어?\n여자: 아직, 아직 하고 있어. 내일까지잖아, 그치?',
-          scriptHighlights: [],
-          questions: [
-            {
-              question: 'What are the speakers mainly discussing?',
-              questionTrans: '화자들이 주로 무엇에 대해 논의하고 있습니까?',
-              options: [
-                'An assignment deadline',
-                'A professor\'s lecture',
-                'A study group',
-                'A class schedule'
-              ],
-              answer: 1,
-              optionTranslations: ['과제 마감일', '교수님 강의', '스터디 그룹', '수업 일정'],
-              optionExplanations: ['과제 마감에 대해 이야기하고 있습니다.', '', '', '']
-            },
-            {
-              question: 'When is the assignment due?',
-              questionTrans: '과제 마감일은 언제입니까?',
-              options: [
-                'Today',
-                'Tomorrow',
-                'Next week',
-                'Next month'
-              ],
-              answer: 2,
-              optionTranslations: ['오늘', '내일', '다음 주', '다음 달'],
-              optionExplanations: ['', '여자가 "내일까지잖아"라고 말했습니다.', '', '']
-            }
-          ]
-        }
-      ]
-    };
-  }
 
   /**
    * ================================================

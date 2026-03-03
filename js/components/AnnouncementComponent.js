@@ -47,11 +47,7 @@ class AnnouncementComponent {
         this._destroyed = false;           // cleanup 호출 여부 플래그
         this._questionTimedOut = false;    // v005: 타임아웃 상태 플래그
         
-        // 구글 시트 설정
-        this.SHEET_CONFIG = {
-            spreadsheetId: '1srFVmFnRa8A73isTO_Vk3yfU1bQWVroHUui8XvYf9e0',
-            gid: '840514208'
-        };
+
         
         // 성별별 이미지
         this.FEMALE_IMAGES = [
@@ -132,33 +128,9 @@ class AnnouncementComponent {
             return;
         }
         
-        // 2) Google Sheets 폴백
-        console.log('🔄 [AnnouncementComponent] Google Sheets 폴백 시도...');
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${this.SHEET_CONFIG.spreadsheetId}/export?format=csv&gid=${this.SHEET_CONFIG.gid}`;
-        console.log('[AnnouncementComponent] CSV URL:', csvUrl);
-        
-        try {
-            const response = await fetch(csvUrl);
-            const csvText = await response.text();
-            console.log(`[AnnouncementComponent] CSV 다운로드 완료 (${csvText.length} bytes)`);
-            
-            this.data = this.parseCSV(csvText);
-            console.log('[AnnouncementComponent] 파싱 완료:', this.data);
-            
-            if (!this.data || !this.data.sets || this.data.sets.length === 0) {
-                throw new Error('데이터가 비어있습니다');
-            }
-            
-            // ✅ 캐시 저장
-            cachedAnnouncementData = this.data;
-            
-        } catch (error) {
-            console.error('[AnnouncementComponent] 데이터 로드 실패, 데모 데이터 사용:', error);
-            this.data = this.getDemoData();
-            
-            // ✅ 데모 데이터도 캐시
-            cachedAnnouncementData = this.data;
-        }
+        // Supabase 로드 실패 시 데이터 없음 처리
+        console.error('[AnnouncementComponent] Supabase 데이터 로드 실패');
+        this.data = null;
     }
     
     // --- Supabase에서 로드 ---
@@ -225,143 +197,7 @@ class AnnouncementComponent {
         }
     }
     
-    /**
-     * CSV 파싱
-     */
-    parseCSV(csvText) {
-        const lines = csvText.split('\n').filter(line => line.trim());
-        console.log(`[AnnouncementComponent] CSV 라인 수: ${lines.length}`);
-        
-        const sets = [];
-        
-        for (let i = 1; i < lines.length; i++) {
-            const columns = this.parseCSVLine(lines[i]);
-            
-            if (columns.length < 37) {
-                console.warn(`[AnnouncementComponent] 라인 ${i} 스킵 (컬럼 부족: ${columns.length})`);
-                continue;
-            }
-            
-            const rawSetId = columns[0].trim();
-            // ID 정규화: announcement_set_0001 형식 그대로 사용
-            let normalizedSetId = rawSetId;
-            if (/^\d+$/.test(rawSetId)) {
-                // 숫자만: "1" → "announcement_set_0001"
-                normalizedSetId = `announcement_set_${String(rawSetId).padStart(4, '0')}`;
-            }
-            // 다른 형식은 그대로 사용
-            
-            const setData = {
-                setId: normalizedSetId,
-                gender: columns[1].trim(), // 🆕 성별
-                narrationUrl: this.convertGoogleDriveUrl(columns[2].trim()), // 🆕 나레이션 URL
-                audioUrl: this.convertGoogleDriveUrl(columns[3].trim()),
-                script: columns[4].trim(),
-                scriptTrans: columns[5].trim(),
-                scriptHighlights: columns[37] ? columns[37].trim() : '',
-                questions: [
-                    {
-                        questionText: columns[6].trim(),
-                        questionTextTrans: columns[7].trim(),
-                        options: [
-                            columns[8].trim(),
-                            columns[9].trim(),
-                            columns[10].trim(),
-                            columns[11].trim()
-                        ],
-                        correctAnswer: parseInt(columns[12].trim()),
-                        translations: [
-                            columns[13].trim(),
-                            columns[14].trim(),
-                            columns[15].trim(),
-                            columns[16].trim()
-                        ],
-                        explanations: [
-                            columns[17].trim(),
-                            columns[18].trim(),
-                            columns[19].trim(),
-                            columns[20].trim()
-                        ]
-                    },
-                    {
-                        questionText: columns[21].trim(),
-                        questionTextTrans: columns[22].trim(),
-                        options: [
-                            columns[23].trim(),
-                            columns[24].trim(),
-                            columns[25].trim(),
-                            columns[26].trim()
-                        ],
-                        correctAnswer: parseInt(columns[27].trim()),
-                        translations: [
-                            columns[28].trim(),
-                            columns[29].trim(),
-                            columns[30].trim(),
-                            columns[31].trim()
-                        ],
-                        explanations: [
-                            columns[33].trim(),
-                            columns[34].trim(),
-                            columns[35].trim(),
-                            columns[36].trim()
-                        ]
-                    }
-                ]
-            };
-            
-            sets.push(setData);
-        }
-        
-        // ✅ Set ID 기준으로 정렬 (announcement_set_0001, announcement_set_0002, ...)
-        console.log('🔄 [AnnouncementComponent] 정렬 전 순서:', sets.map(s => s.setId));
-        
-        sets.sort((a, b) => {
-            const numA = parseInt(a.setId.replace(/\D/g, ''));
-            const numB = parseInt(b.setId.replace(/\D/g, ''));
-            console.log(`  비교: ${a.setId} (${numA}) vs ${b.setId} (${numB}) → ${numA - numB}`);
-            return numA - numB;
-        });
-        
-        console.log('✅ [AnnouncementComponent] 정렬 후 순서:', sets.map(s => s.setId));
-        
-        // 디버깅: 최종 데이터 검증
-        sets.forEach((set, idx) => {
-            console.log(`  [${idx}] ${set.setId} - ${set.questions.length}문제`);
-        });
-        
-        console.log(`[AnnouncementComponent] 파싱된 세트 수: ${sets.length}`);
-        
-        return {
-            type: 'listening_announcement',
-            timeLimit: 20,
-            sets: sets
-        };
-    }
-    
-    /**
-     * CSV 라인 파싱 (쉼표 처리)
-     */
-    parseCSVLine(line) {
-        const result = [];
-        let current = '';
-        let inQuotes = false;
-        
-        for (let i = 0; i < line.length; i++) {
-            const char = line[i];
-            
-            if (char === '"') {
-                inQuotes = !inQuotes;
-            } else if (char === ',' && !inQuotes) {
-                result.push(current);
-                current = '';
-            } else {
-                current += char;
-            }
-        }
-        
-        result.push(current);
-        return result;
-    }
+
     
     /**
      * 세트 인덱스 찾기
@@ -780,8 +616,8 @@ class AnnouncementComponent {
         
         console.log(`[AnnouncementComponent] 선택지 ${optionIndex} 선택됨`);
         
-        // ✅ 수정: '_a'로 통일 (실제 저장되는 키 형식에 맞춤)
-        const questionKey = `${this.currentSetData.setId}_a${this.currentQuestion + 1}`;
+        // ✅ _q로 통일 (다른 3개 컴포넌트와 동일)
+        const questionKey = `${this.currentSetData.setId}_q${this.currentQuestion + 1}`;
         this.answers[questionKey] = optionIndex;
         
         console.log(`[AnnouncementComponent] 답안 저장 - key: ${questionKey}, value: ${optionIndex}`);
@@ -857,17 +693,15 @@ class AnnouncementComponent {
         let totalIncorrect = 0;
         
         this.currentSetData.questions.forEach((question, index) => {
-            // ✅ 수정: questionKey로 답안 찾기 (q 또는 a 둘 다 체크)
-            const questionKeyQ = `${this.currentSetData.setId}_q${index + 1}`;
-            const questionKeyA = `${this.currentSetData.setId}_a${index + 1}`;
-            const userAnswer = this.answers[questionKeyQ] || this.answers[questionKeyA];
+            // ✅ _q 키로 통일
+            const questionKey = `${this.currentSetData.setId}_q${index + 1}`;
+            const userAnswer = this.answers[questionKey];
             const correctAnswer = question.correctAnswer;
             const isCorrect = userAnswer === correctAnswer;
             
             // 🔍 디버깅 로그
             console.log(`[AnnouncementComponent] 문제 ${index + 1}:`, {
-                questionKeyQ,
-                questionKeyA,
+                questionKey,
                 userAnswer,
                 correctAnswer,
                 isCorrect,
@@ -907,13 +741,10 @@ class AnnouncementComponent {
             totalIncorrect: totalIncorrect,
             totalQuestions: this.currentSetData.questions.length,
             score: Math.round((totalCorrect / this.currentSetData.questions.length) * 100),
-            results: results
+            answers: results
         };
         
         console.log('[AnnouncementComponent] 채점 완료:', resultData);
-        
-        // sessionStorage에 저장
-        sessionStorage.setItem('listeningAnnouncementResult', JSON.stringify(resultData));
         
         // 완료 콜백 호출
         if (this.onComplete) {
@@ -938,41 +769,7 @@ class AnnouncementComponent {
     /**
      * 데모 데이터
      */
-    getDemoData() {
-        return {
-            type: 'listening_announcement',
-            timeLimit: 20,
-            sets: [
-                {
-                    setId: 'listening_announcement_1',
-                    gender: 'female',
-                    narrationUrl: 'https://example.com/narration1.mp3',
-                    audioUrl: 'https://example.com/announcement1.mp3',
-                    script: 'This is a demo announcement script.',
-                    scriptTrans: '이것은 데모 공지사항 스크립트입니다.',
-                    scriptHighlights: 'demo,announcement',
-                    questions: [
-                        {
-                            questionText: 'Demo Question 1?',
-                            questionTextTrans: '데모 질문 1?',
-                            options: ['Option A', 'Option B', 'Option C', 'Option D'],
-                            correctAnswer: 0,
-                            translations: ['번역 A', '번역 B', '번역 C', '번역 D'],
-                            explanations: ['해설 A', '해설 B', '해설 C', '해설 D']
-                        },
-                        {
-                            questionText: 'Demo Question 2?',
-                            questionTextTrans: '데모 질문 2?',
-                            options: ['Option A', 'Option B', 'Option C', 'Option D'],
-                            correctAnswer: 1,
-                            translations: ['번역 A', '번역 B', '번역 C', '번역 D'],
-                            explanations: ['해설 A', '해설 B', '해설 C', '해설 D']
-                        }
-                    ]
-                }
-            ]
-        };
-    }
+
     
     /**
      * ================================================
@@ -1180,7 +977,7 @@ class AnnouncementComponent {
             console.warn('[AnnouncementComponent] getRetakeAnswer: currentSetData가 null입니다');
             return null;
         }
-        const questionKey = `${this.currentSetData.setId}_a${this.currentQuestion + 1}`;
+        const questionKey = `${this.currentSetData.setId}_q${this.currentQuestion + 1}`;
         return this.answers[questionKey] || null;
     }
     

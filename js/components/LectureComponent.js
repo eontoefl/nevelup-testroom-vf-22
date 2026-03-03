@@ -43,11 +43,7 @@ class LectureComponent {
         // 타이머 설정
         this.TIME_LIMIT = 30; // 30초 (공지사항은 20초)
         
-        // 구글 시트 설정
-        this.SHEET_CONFIG = {
-            spreadsheetId: '1srFVmFnRa8A73isTO_Vk3yfU1bQWVroHUui8XvYf9e0',
-            gid: '421928479'
-        };
+
         
         // 성별별 교수 이미지
         this.FEMALE_IMAGES = [
@@ -128,33 +124,9 @@ class LectureComponent {
             return;
         }
         
-        // 2) Google Sheets 폴백
-        console.log('🔄 [LectureComponent] Google Sheets 폴백 시도...');
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${this.SHEET_CONFIG.spreadsheetId}/export?format=csv&gid=${this.SHEET_CONFIG.gid}`;
-        console.log('[LectureComponent] CSV URL:', csvUrl);
-        
-        try {
-            const response = await fetch(csvUrl);
-            const csvText = await response.text();
-            console.log(`[LectureComponent] CSV 다운로드 완료 (${csvText.length} bytes)`);
-            
-            this.data = this.parseCSV(csvText);
-            console.log('[LectureComponent] 파싱 완료:', this.data);
-            
-            if (!this.data || !this.data.sets || this.data.sets.length === 0) {
-                throw new Error('데이터가 비어있습니다');
-            }
-            
-            // ✅ 캐시 저장
-            cachedLectureData = this.data;
-            
-        } catch (error) {
-            console.error('[LectureComponent] 데이터 로드 실패, 데모 데이터 사용:', error);
-            this.data = this.getDemoData();
-            
-            // ✅ 데모 데이터도 캐시
-            cachedLectureData = this.data;
-        }
+        // Supabase 로드 실패 시 데이터 없음 처리
+        console.error('[LectureComponent] Supabase 데이터 로드 실패');
+        this.data = null;
     }
     
     // --- Supabase에서 로드 ---
@@ -232,175 +204,6 @@ class LectureComponent {
     /**
      * CSV 파싱 (69개 컬럼: A~BQ)
      */
-    parseCSV(csvText) {
-        const lines = csvText.split('\n').filter(line => line.trim());
-        console.log(`[LectureComponent] CSV 라인 수: ${lines.length}`);
-        
-        const sets = [];
-        
-        // 헤더 확인
-        const firstLine = this.parseCSVLine(lines[0]);
-        const hasHeader = firstLine[0].toLowerCase().includes('setid') || 
-                          firstLine[0].toLowerCase().includes('set_id');
-        const startIndex = hasHeader ? 1 : 0;
-        
-        console.log(`[LectureComponent] 헤더 존재: ${hasHeader}, 시작 인덱스: ${startIndex}`);
-        
-        for (let i = startIndex; i < lines.length; i++) {
-            const columns = this.parseCSVLine(lines[i]);
-            
-            if (columns.length < 68) {
-                console.warn(`[LectureComponent] 라인 ${i} 스킵 (컬럼 부족: ${columns.length}/68)`);
-                continue;
-            }
-            
-            // 기본 정보
-            const rawSetId = columns[0].trim();
-            // ID 정규화: lecture_set_0001 형식 그대로 사용
-            let setId = rawSetId;
-            if (/^\d+$/.test(rawSetId)) {
-                // 숫자만: "1" → "lecture_set_0001"
-                setId = `lecture_set_${String(rawSetId).padStart(4, '0')}`;
-            }
-            // 다른 형식은 그대로 사용
-            
-            const gender = columns[1].trim();
-            const lectureTitle = columns[2].trim(); // 🆕 렉쳐 타이틀
-            const narrationUrl = this.convertGoogleDriveUrl(columns[3].trim());
-            const audioUrl = this.convertGoogleDriveUrl(columns[4].trim());
-            const script = columns[5].trim();
-            const scriptTrans = columns[6].trim();
-            
-            console.log(`[LectureComponent] 세트 파싱: ${setId}, 타이틀: ${lectureTitle}`);
-            
-            // scriptHighlights 파싱 (BP열, 인덱스 67)
-            let scriptHighlights = [];
-            if (columns[67] && columns[67].trim()) {
-                try {
-                    const highlightStr = columns[67].trim();
-                    const items = highlightStr.split('##');
-                    
-                    items.forEach(item => {
-                        const parts = item.split('::');
-                        if (parts.length >= 3) {
-                            scriptHighlights.push({
-                                word: parts[0].trim(),
-                                translation: parts[1].trim(),
-                                explanation: parts[2].trim()
-                            });
-                        }
-                    });
-                    
-                    console.log(`[LectureComponent] scriptHighlights 파싱: ${scriptHighlights.length}개`);
-                } catch (e) {
-                    console.error('[LectureComponent] scriptHighlights 파싱 실패:', e);
-                }
-            }
-            
-            // 문제 1 (H~V: 7~21)
-            const q1 = this.parseQuestion(columns, 7);
-            
-            // 문제 2 (W~AK: 22~36)
-            const q2 = this.parseQuestion(columns, 22);
-            
-            // 문제 3 (AL~AZ: 37~51)
-            const q3 = this.parseQuestion(columns, 37);
-            
-            // 문제 4 (BA~BO: 52~66)
-            const q4 = this.parseQuestion(columns, 52);
-            
-            sets.push({
-                setId: setId,
-                gender: gender,
-                lectureTitle: lectureTitle, // 🆕
-                narrationUrl: narrationUrl,
-                audioUrl: audioUrl,
-                script: script,
-                scriptTrans: scriptTrans,
-                scriptHighlights: scriptHighlights,
-                questions: [q1, q2, q3, q4] // 4문제
-            });
-        }
-        
-        // ✅ Set ID 기준으로 정렬 (lecture_set_0001, lecture_set_0002, ...)
-        console.log('🔄 [LectureComponent] 정렬 전 순서:', sets.map(s => s.setId));
-        
-        sets.sort((a, b) => {
-            const numA = parseInt(a.setId.replace(/\D/g, ''));
-            const numB = parseInt(b.setId.replace(/\D/g, ''));
-            console.log(`  비교: ${a.setId} (${numA}) vs ${b.setId} (${numB}) → ${numA - numB}`);
-            return numA - numB;
-        });
-        
-        console.log('✅ [LectureComponent] 정렬 후 순서:', sets.map(s => s.setId));
-        
-        // 디버깅: 최종 데이터 검증
-        sets.forEach((set, idx) => {
-            console.log(`  [${idx}] ${set.setId} - ${set.questions.length}문제`);
-        });
-        
-        console.log(`[LectureComponent] 파싱된 세트 수: ${sets.length}`);
-        
-        return {
-            type: 'listening_lecture',
-            timeLimit: this.TIME_LIMIT,
-            sets: sets
-        };
-    }
-    
-    /**
-     * 문제 파싱 헬퍼 (15개 컬럼)
-     */
-    parseQuestion(columns, startIndex) {
-        return {
-            questionText: columns[startIndex] || '',
-            questionTrans: columns[startIndex + 1] || '',
-            options: [
-                columns[startIndex + 2] || '',
-                columns[startIndex + 3] || '',
-                columns[startIndex + 4] || '',
-                columns[startIndex + 5] || ''
-            ],
-            correctAnswer: parseInt(columns[startIndex + 6]) || 1,
-            translations: [
-                columns[startIndex + 7] || '',
-                columns[startIndex + 8] || '',
-                columns[startIndex + 9] || '',
-                columns[startIndex + 10] || ''
-            ],
-            explanations: [
-                columns[startIndex + 11] || '',
-                columns[startIndex + 12] || '',
-                columns[startIndex + 13] || '',
-                columns[startIndex + 14] || ''
-            ]
-        };
-    }
-    
-    /**
-     * CSV 라인 파싱 (쉼표 처리)
-     */
-    parseCSVLine(line) {
-        const result = [];
-        let current = '';
-        let inQuotes = false;
-        
-        for (let i = 0; i < line.length; i++) {
-            const char = line[i];
-            
-            if (char === '"') {
-                inQuotes = !inQuotes;
-            } else if (char === ',' && !inQuotes) {
-                result.push(current);
-                current = '';
-            } else {
-                current += char;
-            }
-        }
-        
-        result.push(current);
-        return result;
-    }
     
     /**
      * 세트 인덱스 찾기
@@ -907,13 +710,10 @@ class LectureComponent {
             totalIncorrect: totalIncorrect,
             totalQuestions: this.currentSetData.questions.length,
             score: Math.round((totalCorrect / this.currentSetData.questions.length) * 100),
-            results: results
+            answers: results
         };
         
         console.log('[LectureComponent] 채점 완료:', resultData);
-        
-        // sessionStorage에 저장
-        sessionStorage.setItem('listeningLectureResult', JSON.stringify(resultData));
         
         // 완료 콜백 호출
         if (this.onComplete) {
@@ -938,58 +738,6 @@ class LectureComponent {
     /**
      * 데모 데이터
      */
-    getDemoData() {
-        return {
-            type: 'listening_lecture',
-            timeLimit: 30,
-            sets: [
-                {
-                    setId: 'listening_lecture_1',
-                    gender: 'M',
-                    lectureTitle: 'Listen to a lecture.',
-                    narrationUrl: '',
-                    audioUrl: 'https://example.com/lecture1.mp3',
-                    script: 'This is a demo lecture script.',
-                    scriptTrans: '이것은 데모 강의 스크립트입니다.',
-                    scriptHighlights: [],
-                    questions: [
-                        {
-                            questionText: 'Demo Question 1?',
-                            questionTrans: '데모 질문 1?',
-                            options: ['Option A', 'Option B', 'Option C', 'Option D'],
-                            correctAnswer: 0,
-                            translations: ['번역 A', '번역 B', '번역 C', '번역 D'],
-                            explanations: ['해설 A', '해설 B', '해설 C', '해설 D']
-                        },
-                        {
-                            questionText: 'Demo Question 2?',
-                            questionTrans: '데모 질문 2?',
-                            options: ['Option A', 'Option B', 'Option C', 'Option D'],
-                            correctAnswer: 1,
-                            translations: ['번역 A', '번역 B', '번역 C', '번역 D'],
-                            explanations: ['해설 A', '해설 B', '해설 C', '해설 D']
-                        },
-                        {
-                            questionText: 'Demo Question 3?',
-                            questionTrans: '데모 질문 3?',
-                            options: ['Option A', 'Option B', 'Option C', 'Option D'],
-                            correctAnswer: 2,
-                            translations: ['번역 A', '번역 B', '번역 C', '번역 D'],
-                            explanations: ['해설 A', '해설 B', '해설 C', '해설 D']
-                        },
-                        {
-                            questionText: 'Demo Question 4?',
-                            questionTrans: '데모 질문 4?',
-                            options: ['Option A', 'Option B', 'Option C', 'Option D'],
-                            correctAnswer: 3,
-                            translations: ['번역 A', '번역 B', '번역 C', '번역 D'],
-                            explanations: ['해설 A', '해설 B', '해설 C', '해설 D']
-                        }
-                    ]
-                }
-            ]
-        };
-    }
     
     /**
      * ================================================

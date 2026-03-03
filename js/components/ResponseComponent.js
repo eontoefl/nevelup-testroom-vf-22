@@ -84,12 +84,7 @@ class ResponseComponent {
       'https://eontoefl.github.io/toefl-audio/listening/response/image/response_imageM5.jpg'
     ];
     
-    // Google Sheets 설정
-    this.SHEET_CONFIG = {
-      spreadsheetId: '1srFVmFnRa8A73isTO_Vk3yfU1bQWVroHUui8XvYf9e0',
-      sheetGid: '0'
-    };
-  }
+
 
   /**
    * 초기화 - 데이터 로드 및 첫 문제 시작
@@ -145,35 +140,9 @@ class ResponseComponent {
       return supabaseResult;
     }
     
-    // 2) Google Sheets 폴백
-    console.log('🔄 [ResponseComponent] Google Sheets 폴백 시도...');
-    try {
-      const csvUrl = `https://docs.google.com/spreadsheets/d/${this.SHEET_CONFIG.spreadsheetId}/export?format=csv&gid=${this.SHEET_CONFIG.sheetGid}`;
-      console.log('[ResponseComponent] CSV URL:', csvUrl);
-      
-      const response = await fetch(csvUrl);
-      console.log('[ResponseComponent] Response status:', response.status);
-      
-      if (!response.ok) {
-        console.warn('[ResponseComponent] HTTP 에러, 데모 데이터 사용');
-        return this.getDemoData();
-      }
-      
-      const csvText = await response.text();
-      const parsedData = this.parseCSV(csvText);
-      
-      if (!parsedData || !parsedData.sets || parsedData.sets.length === 0) {
-        console.warn('[ResponseComponent] CSV 파싱 실패, 데모 데이터 사용');
-        return this.getDemoData();
-      }
-      
-      console.log('[ResponseComponent] Google Sheets 데이터 로드 성공:', parsedData.sets.length, '개 세트');
-      cachedResponseData = parsedData;
-      return parsedData;
-    } catch (error) {
-      console.error('[ResponseComponent] 데이터 로드 실패:', error);
-      return this.getDemoData();
-    }
+    // Supabase 로드 실패 시 데이터 없음 처리
+    console.error('[ResponseComponent] Supabase 데이터 로드 실패');
+    return null;
   }
 
   // --- Supabase에서 로드 ---
@@ -238,150 +207,6 @@ class ResponseComponent {
   /**
    * CSV 파싱
    */
-  parseCSV(csvText) {
-    console.log('[ResponseComponent] CSV 파싱 시작');
-    
-    const lines = csvText.trim().split('\n');
-    const setsMap = {};
-    let lastSetId = '';
-    
-    // 헤더 제외하고 데이터 파싱
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-      
-      const values = this.parseCSVLine(line);
-      
-      if (values.length < 9) {
-        console.warn(`[ResponseComponent] Line ${i} 건너뜀: 열 부족 (${values.length}/9)`);
-        continue;
-      }
-      
-      let setId = values[0].trim();
-      if (!setId && lastSetId) {
-        setId = lastSetId;
-      }
-      if (setId) {
-        lastSetId = setId;
-        // ID 정규화: response_set_0001 형식 그대로 사용
-        if (/^\d+$/.test(setId)) {
-          // 순수 숫자: "1" → "response_set_0001"
-          setId = `response_set_${String(setId).padStart(4, '0')}`;
-        }
-        // 다른 형식은 그대로 사용
-      }
-      
-      const questionNum = parseInt(values[1]) || 1;
-      const audioUrl = values[2].trim();
-      const gender = values[3].trim();
-      const option1 = values[4].trim();
-      const option2 = values[5].trim();
-      const option3 = values[6].trim();
-      const option4 = values[7].trim();
-      const answer = parseInt(values[8]) || 1;
-      
-      const script = values[9] ? values[9].trim() : '';
-      const scriptTrans = values[10] ? values[10].trim() : '';
-      const optionTrans1 = values[11] ? values[11].trim() : '';
-      const optionTrans2 = values[12] ? values[12].trim() : '';
-      const optionTrans3 = values[13] ? values[13].trim() : '';
-      const optionTrans4 = values[14] ? values[14].trim() : '';
-      const optionExp1 = values[15] ? values[15].trim() : '';
-      const optionExp2 = values[16] ? values[16].trim() : '';
-      const optionExp3 = values[17] ? values[17].trim() : '';
-      const optionExp4 = values[18] ? values[18].trim() : '';
-      
-      let scriptHighlights = [];
-      if (values[19]) {
-        try {
-          scriptHighlights = JSON.parse(values[19]);
-        } catch (e) {
-          scriptHighlights = [];
-        }
-      }
-      
-      // 최종 정규화된 ID 저장
-      if (!setsMap[setId]) {
-        setsMap[setId] = {
-          id: setId,
-          questions: []
-        };
-      }
-      
-      setsMap[setId].questions.push({
-        questionNum: questionNum,
-        audioUrl: audioUrl,
-        gender: gender,
-        options: [option1, option2, option3, option4],
-        answer: answer,
-        script: script,
-        scriptTrans: scriptTrans,
-        scriptHighlights: scriptHighlights,
-        optionTranslations: [optionTrans1, optionTrans2, optionTrans3, optionTrans4],
-        optionExplanations: [optionExp1, optionExp2, optionExp3, optionExp4]
-      });
-    }
-    
-    const sets = Object.values(setsMap);
-    sets.forEach(set => {
-      set.questions.sort((a, b) => a.questionNum - b.questionNum);
-    });
-    
-    // ✅ Set ID 기준으로 정렬 (response_set_0001, response_set_0002, ...)
-    console.log('🔄 [ResponseComponent] 정렬 전 순서:', sets.map(s => s.id));
-    
-    sets.sort((a, b) => {
-      const numA = parseInt(a.id.replace(/\D/g, ''));
-      const numB = parseInt(b.id.replace(/\D/g, ''));
-      console.log(`  비교: ${a.id} (${numA}) vs ${b.id} (${numB}) → ${numA - numB}`);
-      return numA - numB;
-    });
-    
-    console.log('✅ [ResponseComponent] 정렬 후 순서:', sets.map(s => s.id));
-    
-    // 디버깅: 최종 데이터 검증
-    sets.forEach((set, idx) => {
-      console.log(`  [${idx}] ${set.id} - ${set.questions.length}문제`);
-    });
-    
-    console.log(`[ResponseComponent] CSV 파싱 완료: ${sets.length}개 세트`);
-    
-    return {
-      type: 'listening_response',
-      timeLimit: this.RESPONSE_TIME_LIMIT,
-      sets: sets
-    };
-  }
-
-  /**
-   * CSV 라인 파싱 (쉼표 + 따옴표 처리)
-   */
-  parseCSVLine(line) {
-    const result = [];
-    let current = '';
-    let inQuotes = false;
-    
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      const nextChar = line[i + 1];
-      
-      if (char === '"' && nextChar === '"' && inQuotes) {
-        current += '"';
-        i++;
-      } else if (char === '"') {
-        inQuotes = !inQuotes;
-      } else if (char === ',' && !inQuotes) {
-        result.push(current);
-        current = '';
-      } else {
-        current += char;
-      }
-    }
-    
-    result.push(current);
-    return result;
-  }
-
   /**
    * 세트 인덱스 찾기
    */
@@ -935,9 +760,6 @@ class ResponseComponent {
     
     console.log('[ResponseComponent] 채점 완료:', results);
     
-    // sessionStorage 저장
-    sessionStorage.setItem('responseResults', JSON.stringify([results]));
-    
     // 완료 콜백
     if (this.onComplete) {
       console.log('[ResponseComponent] 🎉 onComplete 콜백 호출');
@@ -952,48 +774,7 @@ class ResponseComponent {
   /**
    * 데모 데이터
    */
-  getDemoData() {
-    return {
-      type: 'listening_response',
-      timeLimit: 20,
-      sets: [
-        {
-          id: 'listening_response_1',
-          questions: [
-            {
-              questionNum: 1,
-              audioUrl: '',
-              gender: 'female',
-              options: [
-                'As a matter of fact, I was returning a book.',
-                'Yes, you can find it in the reference section.',
-                'I don\'t think I\'ll have enough time to do that.',
-                'Actually, I think I can get there a little earlier.'
-              ],
-              answer: 1,
-              script: 'Did you stop by the library yesterday?',
-              scriptTrans: '어제 도서관에 들렀어?',
-              scriptHighlights: [],
-              optionTranslations: [
-                '사실, 나는 책을 반납하고 있었어.',
-                '네, 참고 자료 섹션에서 찾을 수 있어요.',
-                '그럴 시간이 충분하지 않을 것 같아요.',
-                '사실, 조금 더 일찍 도착할 수 있을 것 같아요.'
-              ],
-              optionExplanations: [
-                '도서관에 들렀는지 묻는 질문에 "책을 반납하고 있었다"는 답변은 적절합니다.',
-                '장소를 묻는 질문이 아니므로 부적절합니다.',
-                '시간 여부를 묻는 질문이 아니므로 문맥에 맞지 않습니다.',
-                '도착 시간에 대한 답변으로 질문과 관련이 없습니다.'
-              ]
-            }
-          ]
-        }
-      ]
-    };
-  }
 
-  
   /**
    * ================================================
    * 2차 풀이 (이중채점) 모드
