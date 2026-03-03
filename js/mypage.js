@@ -13,8 +13,8 @@
 // 전역 상태
 // ================================================
 let mpUser = null;           // sessionStorage에서 로드한 유저 정보
-let mpStudyRecords = [];     // tr_study_records
-let mpAuthRecords = [];      // tr_auth_records
+let mpV2Results = [];        // study_results_v2
+let mpStudyRecords = [];     // (잔디/최근기록용 — 추후 V2 전환 예정)
 let mpGradeRules = [];       // tr_grade_rules (등급/환급 기준표)
 let mpDeadlineExtensions = []; // tr_deadline_extensions (데드라인 연장)
 
@@ -81,16 +81,10 @@ async function loadAllData() {
     const userId = mpUser.id;
     console.log('📊 [MyPage] 데이터 로드 시작 - userId:', userId);
 
-    // 학습 기록 전체 로드 (result_json은 대용량이므로 제외 - 다시보기 클릭 시 별도 로드)
-    mpStudyRecords = await supabaseSelect(
-        'tr_study_records',
-        `user_id=eq.${userId}&order=completed_at.desc&select=id,user_id,week,day,task_type,module_number,attempt,score,total,time_spent,detail,error_note_text,memo_text,completed_at`
-    ) || [];
-
-    // 인증 기록 전체 로드
-    mpAuthRecords = await supabaseSelect(
-        'tr_auth_records',
-        `user_id=eq.${userId}&order=created_at.desc&select=*`
+    // V2 학습 결과 로드 (result_json은 대용량이므로 제외)
+    mpV2Results = await supabaseSelect(
+        'study_results_v2',
+        `user_id=eq.${userId}&order=created_at.desc&select=id,user_id,section_type,module_number,week,day,first_result_json,second_result_json,error_note_submitted,created_at,updated_at`
     ) || [];
 
     // 등급/환급 기준표 로드
@@ -105,7 +99,7 @@ async function loadAllData() {
         `user_id=eq.${userId}&select=original_date,extra_days`
     ) || [];
 
-    console.log(`📊 [MyPage] 로드 완료 - 학습기록: ${mpStudyRecords.length}건, 인증기록: ${mpAuthRecords.length}건, 등급규칙: ${mpGradeRules.length}건, 연장: ${mpDeadlineExtensions.length}건`);
+    console.log(`📊 [MyPage] 로드 완료 - V2결과: ${mpV2Results.length}건, 등급규칙: ${mpGradeRules.length}건, 연장: ${mpDeadlineExtensions.length}건`);
 }
 
 // ================================================
@@ -265,49 +259,56 @@ function renderSummaryCards() {
     // ── 오늘까지 할당된 과제 수 계산 ──
     const taskStats = countTasksDueToday(programType, totalWeeks);
     const tasksDueToday = taskStats.due;
-    const tasksSubmitted = taskStats.completed;
 
-    // 시작 전인데 미리 제출한 경우: 분모 0이지만 분자가 있음
-    let submitPct, submitSubText;
-    if (tasksDueToday === 0 && mpStudyRecords.length > 0) {
-        // 선제출: 퍼센트 대신 건수로 표시
-        submitPct = 0; // 바는 0%
-        submitSubText = `${mpStudyRecords.length}건 미리 완료 🎉`;
-        document.getElementById('submitRate').textContent = mpStudyRecords.length;
-        document.getElementById('submitRateUnit').textContent = '건';
-    } else {
-        submitPct = tasksDueToday > 0 ? Math.round((tasksSubmitted / tasksDueToday) * 100) : 0;
-        submitSubText = `${tasksSubmitted}/${tasksDueToday}개 완료`;
-        document.getElementById('submitRate').textContent = submitPct;
-        document.getElementById('submitRateUnit').textContent = '%';
-    }
-
-    // 2칸: 제출률
-    document.getElementById('submitBar').style.width = `${Math.min(submitPct, 100)}%`;
-    document.getElementById('submitSub').textContent = submitSubText;
-
-    // ── 인증률 계산 (auth_rate 합계 / 오늘까지 할당 과제 수 × 100) ──
+    // ── 인증률 계산 (V2: 각 과제별 인증률 합산 / 오늘까지 할당 과제 수) ──
     let authRateSum = 0;
-    mpAuthRecords.forEach(r => { authRateSum += (r.auth_rate || 0); });
+    
+    // study_results_v2에서 과제별 인증률 계산
+    mpV2Results.forEach(r => {
+        let taskAuth = 0;
+        const sectionType = r.section_type;
+        
+        // 스피킹: 30 + 30 + 40
+        if (sectionType === 'speaking') {
+            if (r.first_result_json) taskAuth += 30;
+            if (r.second_result_json) taskAuth += 30;
+            if (r.error_note_submitted) taskAuth += 40;
+        }
+        // 보카/입문서: 있으면 100
+        else if (sectionType === 'vocab' || sectionType === 'intro-book') {
+            if (r.first_result_json) taskAuth = 100;
+        }
+        // 리딩/리스닝/라이팅: 33 + 33 + 34
+        else {
+            if (r.first_result_json) taskAuth += 33;
+            if (r.second_result_json) taskAuth += 33;
+            if (r.error_note_submitted) taskAuth += 34;
+        }
+        
+        authRateSum += taskAuth;
+    });
 
-    // 분모 결정: 도래일이 0이면 제출 건수를 분모로 사용 (선제출 케이스)
-    const authDenominator = tasksDueToday > 0 ? tasksDueToday : tasksSubmitted;
+    // 분모 결정
+    const authDenominator = tasksDueToday > 0 ? tasksDueToday : mpV2Results.length;
 
     let authRatePct, authSubText;
     if (authDenominator > 0) {
         authRatePct = Math.round(authRateSum / authDenominator);
-        const authCompleted = Math.round(authRateSum / 100);
+        const fullAuthCount = mpV2Results.filter(r => {
+            if (r.section_type === 'vocab' || r.section_type === 'intro-book') return !!r.first_result_json;
+            return r.first_result_json && r.second_result_json && r.error_note_submitted;
+        }).length;
         if (tasksDueToday === 0) {
-            authSubText = `인증 ${authCompleted} / ${tasksSubmitted}건 (시작 전)`;
+            authSubText = `인증 ${fullAuthCount} / ${mpV2Results.length}건 (시작 전)`;
         } else {
-            authSubText = `인증 ${authCompleted} / ${tasksDueToday}건`;
+            authSubText = `인증 ${fullAuthCount} / ${tasksDueToday}건`;
         }
     } else {
         authRatePct = 0;
         authSubText = '데이터 없음';
     }
 
-    // 3칸: 인증률
+    // 인증률 카드
     document.getElementById('authRate').textContent = authRatePct;
     document.getElementById('authRateUnit').textContent = '%';
     document.getElementById('authBar').style.width = `${Math.min(authRatePct, 100)}%`;
@@ -399,18 +400,18 @@ function countTasksDueToday(programType, totalWeeks) {
 
                     totalTasks++;
 
-                    // 완료 여부 확인 (progress-tracker와 동일 로직)
+                    // 완료 여부 확인 (study_results_v2 기준)
                     if (parsed.type === 'vocab' || parsed.type === 'intro-book') {
-                        const found = mpStudyRecords.find(r => 
-                            r.task_type === parsed.type && r.week === w && r.day === dayKr
+                        const found = mpV2Results.find(r => 
+                            r.section_type === parsed.type && String(r.week) === String(w) && r.day === dayKr
                         );
                         if (found) completedTasks++;
                     } else {
                         const modNum = parsed.params && (parsed.params.module || parsed.params.number) 
                             ? (parsed.params.module || parsed.params.number) 
                             : parsed.moduleNumber;
-                        const found = mpStudyRecords.find(r => 
-                            r.task_type === parsed.type && r.module_number == modNum
+                        const found = mpV2Results.find(r => 
+                            r.section_type === parsed.type && r.module_number == modNum
                         );
                         if (found) completedTasks++;
                     }
