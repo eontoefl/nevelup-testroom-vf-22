@@ -156,6 +156,14 @@ const StageSelector = {
  * 화면 전환 + DB에서 최신 상태 다시 읽기
  */
 function backToStageSelect() {
+    // ★ 핵심: ModuleController cleanup 먼저 실행 (좀비 프로세스 방지)
+    // 모듈 중간에 나갈 때 컴포넌트의 setTimeout 체인, audio, video, timer를 즉시 정리
+    if (window.moduleController && typeof window.moduleController.cleanup === 'function') {
+        console.log('🧹 [backToStageSelect] ModuleController cleanup 실행');
+        window.moduleController.cleanup();
+        window.moduleController = null;
+    }
+    
     document.querySelectorAll('.screen').forEach(function(s) { s.style.display = 'none'; });
     document.querySelectorAll('.result-screen, .test-screen').forEach(function(s) { s.style.display = 'none'; });
     var screen = document.getElementById('stageSelectScreen');
