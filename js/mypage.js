@@ -93,7 +93,7 @@ function renderAll() {
     renderSummaryCards();
     renderDeadlineExtensionBanner();
     renderGrass();
-    renderRecentRecords();
+    renderScoreChart();
 }
 
 // ================================================
@@ -698,61 +698,194 @@ function getCurrentScheduleDay() {
 }
 
 // ================================================
-// ③ 최근 학습 기록 렌더링
+// ③ 점수 추이 차트
 // ================================================
-function renderRecentRecords() {
-    const tbody = document.getElementById('recordTableBody');
-    
-    // ★ 시작 전 or 데이터 없음
-    if (mpStudyRecords.length === 0) {
-        const beforeStart = isBeforeStart();
-        const msg = beforeStart
-            ? `<i class="fa-solid fa-calendar-day"></i>
-               <p>챌린지가 아직 시작되지 않았어요.<br><strong>${formatStartDate(mpUser.startDate)}</strong>부터 학습 기록이 쌓입니다! 🚀</p>`
-            : `<i class="fa-solid fa-inbox"></i>
-               <p>아직 학습 기록이 없어요.<br>테스트룸에서 과제를 시작해보세요! 💪</p>`;
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="5">
-                    <div class="empty-state">${msg}</div>
-                </td>
-            </tr>
-        `;
+let scoreChartInstance = null;  // Chart.js 인스턴스
+let currentScoreTab = 'reading'; // 현재 활성 탭
+
+/**
+ * score 문자열("3/5") → 정답률(60) 변환
+ * JSON 객체 또는 null 입력 허용
+ */
+function parseScore(resultJson) {
+    if (!resultJson) return null;
+    // resultJson이 문자열이면 파싱
+    let obj = resultJson;
+    if (typeof obj === 'string') {
+        try { obj = JSON.parse(obj); } catch(e) { return null; }
+    }
+    if (!obj.score) return null;
+    const parts = String(obj.score).split('/');
+    if (parts.length !== 2) return null;
+    const got = parseFloat(parts[0]);
+    const total = parseFloat(parts[1]);
+    if (isNaN(got) || isNaN(total) || total === 0) return null;
+    return Math.round((got / total) * 100);
+}
+
+/**
+ * 특정 section_type의 차트 데이터 생성
+ * → 시간순 정렬, 라벨 + 1차/2차 점수 배열 반환
+ */
+function buildChartData(sectionType) {
+    const filtered = mpV2Results
+        .filter(r => r.section_type === sectionType)
+        .sort((a, b) => {
+            // week → day → module_number 순 정렬
+            const wA = (a.week || 0) * 100 + (a.day || 0) * 10 + (a.module_number || 0);
+            const wB = (b.week || 0) * 100 + (b.day || 0) * 10 + (b.module_number || 0);
+            return wA - wB;
+        });
+
+    const labels = [];
+    const firstScores = [];
+    const secondScores = [];
+
+    filtered.forEach(r => {
+        const label = `W${r.week || '?'}D${r.day || '?'} M${r.module_number || '?'}`;
+        const first = parseScore(r.first_result_json);
+        const second = parseScore(r.second_result_json);
+
+        // 1차 점수도 없으면 스킵
+        if (first === null) return;
+
+        labels.push(label);
+        firstScores.push(first);
+        secondScores.push(second); // null 가능 (2차 미응시)
+    });
+
+    return { labels, firstScores, secondScores };
+}
+
+/**
+ * Chart.js로 grouped bar chart 렌더링
+ */
+function renderScoreChart() {
+    const canvas = document.getElementById('scoreChart');
+    const emptyEl = document.getElementById('scoreChartEmpty');
+    if (!canvas) return;
+
+    // 탭 이벤트 바인딩 (최초 1회)
+    setupScoreTabEvents();
+
+    // 데이터 생성
+    const data = buildChartData(currentScoreTab);
+
+    // 데이터 없음 처리
+    if (data.labels.length === 0) {
+        canvas.style.display = 'none';
+        if (emptyEl) emptyEl.style.display = 'flex';
+        if (scoreChartInstance) { scoreChartInstance.destroy(); scoreChartInstance = null; }
         return;
     }
 
-    // 최근 20개만 표시
-    const recent = mpStudyRecords.slice(0, 20);
-    
-    tbody.innerHTML = recent.map(record => {
-        const date = formatDate(record.completed_at);
-        const taskLabel = getTaskLabel(record.task_type);
-        const moduleText = getModuleText(record);
-        const scoreHtml = renderScore(record);
-        const noteHtml = renderNoteButton(record);
-        const replayHtml = renderReplayButton(record);
-        const retryHtml = renderRetryButton(record);
+    canvas.style.display = '';
+    if (emptyEl) emptyEl.style.display = 'none';
 
-        return `
-            <tr>
-                <td><span class="date-badge">${date}</span></td>
-                <td>
-                    <div class="task-info">
-                        <span class="task-module ${taskLabel.cls}">${taskLabel.name}</span>
-                        ${moduleText}
-                    </div>
-                </td>
-                <td>${scoreHtml}</td>
-                <td>${noteHtml}</td>
-                <td>
-                    <div class="action-buttons">
-                        ${replayHtml}
-                        ${retryHtml}
-                    </div>
-                </td>
-            </tr>
-        `;
-    }).join('');
+    // 2차 시도 데이터가 하나라도 있는지 확인
+    const hasSecond = data.secondScores.some(s => s !== null);
+
+    const datasets = [
+        {
+            label: '1차 시도',
+            data: data.firstScores,
+            backgroundColor: 'rgba(148, 128, 197, 0.75)',
+            borderColor: 'rgba(148, 128, 197, 1)',
+            borderWidth: 1,
+            borderRadius: 4,
+            barPercentage: hasSecond ? 0.7 : 0.5,
+            categoryPercentage: hasSecond ? 0.6 : 0.4
+        }
+    ];
+
+    if (hasSecond) {
+        datasets.push({
+            label: '2차 시도',
+            data: data.secondScores.map(s => s === null ? 0 : s),
+            backgroundColor: data.secondScores.map(s => 
+                s === null ? 'transparent' : 'rgba(119, 191, 126, 0.75)'
+            ),
+            borderColor: data.secondScores.map(s => 
+                s === null ? 'transparent' : 'rgba(119, 191, 126, 1)'
+            ),
+            borderWidth: 1,
+            borderRadius: 4,
+            barPercentage: 0.7,
+            categoryPercentage: 0.6
+        });
+    }
+
+    // 기존 차트 제거 후 새로 생성
+    if (scoreChartInstance) { scoreChartInstance.destroy(); }
+
+    scoreChartInstance = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: data.labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            if (ctx.raw === 0 && data.secondScores[ctx.dataIndex] === null) {
+                                return '2차: 미응시';
+                            }
+                            return `${ctx.dataset.label}: ${ctx.raw}%`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: v => v + '%',
+                        font: { size: 11 },
+                        color: '#99aabb'
+                    },
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                x: {
+                    ticks: {
+                        font: { size: 11 },
+                        color: '#5c6878',
+                        maxRotation: 45,
+                        minRotation: 0
+                    },
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+
+    console.log(`📊 [MyPage] 점수 차트 렌더링 완료 - ${currentScoreTab}, ${data.labels.length}건`);
+}
+
+/**
+ * 탭 클릭 이벤트 바인딩
+ */
+let scoreTabsBound = false;
+function setupScoreTabEvents() {
+    if (scoreTabsBound) return;
+    scoreTabsBound = true;
+
+    document.querySelectorAll('.score-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            // 활성 탭 변경
+            document.querySelectorAll('.score-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            // 차트 데이터 교체
+            currentScoreTab = tab.getAttribute('data-tab');
+            renderScoreChart();
+        });
+    });
 }
 
 /**
