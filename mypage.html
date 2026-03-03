@@ -6,7 +6,8 @@
   <title>마이페이지 – 학습 현황</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" />
-  <link rel="stylesheet" href="css/mypage-style.css?v=007_grade_fix" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="css/mypage-style.css?v=008_score_chart" />
   <link rel="stylesheet" href="css/mypage-grass-fast.css" />
   <link rel="stylesheet" href="css/mypage-grass-standard.css" />
 </head>
@@ -169,8 +170,8 @@
         </div>
         <div class="grass-legend">
           <span class="legend-item"><span class="legend-dot level-3"></span>100% 완료</span>
-          <span class="legend-item"><span class="legend-dot level-2"></span>66% (1차+2차)</span>
-          <span class="legend-item"><span class="legend-dot level-1"></span>33% (1차만)</span>
+          <span class="legend-item"><span class="legend-dot level-2"></span>1차+2차</span>
+          <span class="legend-item"><span class="legend-dot level-1"></span>1차만</span>
           <span class="legend-item"><span class="legend-dot fail"></span>미제출</span>
           <span class="legend-item"><span class="legend-dot empty"></span>예정</span>
           <span class="legend-item"><span class="legend-dot extended"></span>연장</span>
@@ -256,8 +257,8 @@
         </div>
         <div class="grass-legend">
           <span class="legend-item"><span class="legend-dot level-3"></span>100% 완료</span>
-          <span class="legend-item"><span class="legend-dot level-2"></span>66% (1차+2차)</span>
-          <span class="legend-item"><span class="legend-dot level-1"></span>33% (1차만)</span>
+          <span class="legend-item"><span class="legend-dot level-2"></span>1차+2차</span>
+          <span class="legend-item"><span class="legend-dot level-1"></span>1차만</span>
           <span class="legend-item"><span class="legend-dot fail"></span>미제출</span>
           <span class="legend-item"><span class="legend-dot empty"></span>예정</span>
           <span class="legend-item"><span class="legend-dot extended"></span>연장</span>
@@ -265,32 +266,42 @@
       </div>
     </section>
 
-    <!-- ③ 최근 학습 기록 -->
+    <!-- ③ 점수 추이 -->
     <section class="section-block">
       <h2 class="section-title">
-        <i class="fa-solid fa-book-open"></i> 최근 학습 기록
+        <i class="fa-solid fa-chart-column"></i> 나의 성적 변화
       </h2>
+      <p class="section-desc">Reading · Listening 1차/2차 시도 점수를 비교합니다</p>
 
-      <div class="record-table-wrap">
-        <table class="record-table">
-          <thead>
-            <tr>
-              <th>날짜</th>
-              <th>과제</th>
-              <th>점수</th>
-              <th>노트</th>
-              <th>해설 / 연습</th>
-            </tr>
-          </thead>
-          <tbody id="recordTableBody">
-            <!-- JS로 동적 렌더링 -->
-            <tr>
-              <td colspan="5" style="text-align:center; padding:32px; color:var(--text-muted);">
-                <i class="fa-solid fa-spinner fa-spin"></i> 데이터를 불러오는 중...
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- 탭 -->
+      <div class="score-tabs">
+        <button class="score-tab active" data-tab="reading">
+          <i class="fa-solid fa-book-open"></i> Reading
+        </button>
+        <button class="score-tab" data-tab="listening">
+          <i class="fa-solid fa-headphones"></i> Listening
+        </button>
+      </div>
+
+      <!-- 차트 영역 -->
+      <div class="score-chart-wrap" id="scoreChartWrap">
+        <canvas id="scoreChart" height="260"></canvas>
+        <!-- 데이터 없을 때 표시 (JS에서 제어) -->
+        <div class="score-chart-empty" id="scoreChartEmpty" style="display:none;">
+          <i class="fa-solid fa-chart-bar"></i>
+          <p>아직 완료한 과제가 없습니다</p>
+        </div>
+      </div>
+
+      <!-- 범례 -->
+      <div class="score-legend">
+        <span class="score-legend-item">
+          <span class="score-legend-dot first"></span> 1차 시도
+        </span>
+        <span class="score-legend-item">
+          <span class="score-legend-dot second"></span> 2차 시도
+        </span>
+        <span class="score-legend-note">* 2차 미응시 모듈은 1차만 표시됩니다</span>
       </div>
     </section>
 
@@ -336,6 +347,6 @@
   <!-- 해설 다시보기 -->
   <script src="js/result-replay.js?v=20260222_writing_fix"></script>
   <!-- 마이페이지 전용 로직 -->
-  <script src="js/mypage.js?v=014_grade_color_fix"></script>
+  <script src="js/mypage.js?v=015_score_chart"></script>
 </body>
 </html>
