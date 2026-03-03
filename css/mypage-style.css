@@ -266,10 +266,10 @@ body {
   box-shadow: var(--shadow-md);
 }
 
-.card-blue   { background: var(--signature-pale);  border-color: #d8cff0; }
-.card-green  { background: var(--accent-light);    border-color: #bde6c0; }
-.card-purple { background: #ede8f5;                border-color: #c4b5e0; }
-.card-orange { background: var(--orange-light);    border-color: #f2c9b0; }
+.card-green  { background: #edf7ee;  border-color: #b8debb; }
+.card-blue   { background: #e8f4fd;  border-color: #a8d4f0; }
+.card-purple { background: #f3ebff;  border-color: #d4bffc; }
+.card-orange { background: #fff4eb;  border-color: #f2c9a0; }
 
 .sc-icon {
   width: 44px; height: 44px;
@@ -278,10 +278,10 @@ body {
   font-size: 1.2rem;
   flex-shrink: 0;
 }
-.card-blue   .sc-icon { background: #9480c522; color: var(--signature); }
-.card-green  .sc-icon { background: #77bf7e22; color: var(--accent); }
-.card-purple .sc-icon { background: #7c3aed22; color: #7c3aed; }
-.card-orange .sc-icon { background: #e8875a22; color: var(--orange); }
+.card-green  .sc-icon { background: #d4edda; color: #2d9f3e; }
+.card-blue   .sc-icon { background: #cce5ff; color: #2b7de9; }
+.card-purple .sc-icon { background: #e8d5ff; color: #8b5cf6; }
+.card-orange .sc-icon { background: #ffe0cc; color: #e8875a; }
 
 .sc-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 
@@ -326,9 +326,10 @@ body {
   background: var(--signature);
   transition: width .6s ease;
 }
-.card-green  .progress-fill { background: var(--accent); }
-.card-purple .progress-fill { background: #7c3aed; }
-.card-orange .progress-fill { background: var(--orange); }
+.card-green  .progress-fill { background: #2d9f3e; }
+.card-blue   .progress-fill { background: #2b7de9; }
+.card-purple .progress-fill { background: #8b5cf6; }
+.card-orange .progress-fill { background: #e8875a; }
 
 .sc-sub {
   font-size: .75rem;
