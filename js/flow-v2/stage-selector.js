@@ -12,6 +12,7 @@ const StageSelector = {
     // 현재 선택된 과제 정보
     sectionType: null,   // 'reading', 'listening', 'writing', 'speaking'
     moduleNumber: null,  // 1, 2, 3, ...
+    _isRetryMode: false, // ★ 다시 풀기 모드 여부 (안내 문구 분기용)
 
     /**
      * 단계 선택 화면 표시
@@ -148,8 +149,181 @@ const StageSelector = {
                 noteStatus.textContent = '제출 후 확인 가능';
             }
         }
+
+        // ★ 다시 풀기 시스템 — 기한 판단 + 다시 풀기 버튼 표시
+        var isFirstCycleComplete = saved.secondResult && saved.errorNoteSubmitted;
+        var isExpired = (typeof isTaskDeadlinePassed === 'function') ? isTaskDeadlinePassed() : false;
+        var isFirstCycleIncomplete = saved.firstResult && !isFirstCycleComplete;
+        
+        // 지연 잠금: 기한이 지났고 locked_auth_rate가 아직 없으면 → 현재 인증률로 확정
+        if (isExpired && saved.lockedAuthRate == null && saved.firstResult) {
+            var currentRate = 0;
+            if (saved.firstResult) currentRate += 33;
+            if (saved.secondResult) currentRate += 33;
+            if (saved.errorNoteSubmitted) currentRate += 34;
+            
+            // DB에 locked_auth_rate 저장 (지연 잠금 실행)
+            try {
+                await StudySave.setDelayedLock(currentRate);
+                console.log('🔒 [StageSelector] 지연 잠금 실행 완료 — 인증률', currentRate, '% 확정');
+            } catch(e) {
+                console.warn('⚠️ [StageSelector] 지연 잠금 저장 실패:', e);
+            }
+        }
+
+        // 다시 풀기 버튼 표시 조건:
+        // (A) 첫 사이클 3단계 모두 완료
+        // (B) 기한 마감 + 첫 사이클 미완성 (강제 종료)
+        var showRetryButton = isFirstCycleComplete || (isExpired && isFirstCycleIncomplete);
+        
+        // 기한 마감 + 미완성 시 강제 종료 안내
+        if (isExpired && isFirstCycleIncomplete) {
+            var forceCloseNotice = document.getElementById('stageForceCloseNotice');
+            if (!forceCloseNotice) {
+                forceCloseNotice = document.createElement('div');
+                forceCloseNotice.id = 'stageForceCloseNotice';
+                forceCloseNotice.style.cssText = 'padding:10px 16px; margin:8px 0; background:#fef3c7; border-radius:8px; font-size:13px; color:#92400e; text-align:center;';
+                forceCloseNotice.innerHTML = '⚠️ 기한 마감으로 첫 사이클이 종료되었습니다.';
+                var stageScreen = document.getElementById('stageSelectScreen');
+                var btnArea = stageScreen ? stageScreen.querySelector('.stage-buttons') : null;
+                if (btnArea) btnArea.parentNode.insertBefore(forceCloseNotice, btnArea.nextSibling);
+            }
+            forceCloseNotice.style.display = 'block';
+            
+            // 미완료 단계 표시 변경
+            if (!saved.secondResult) {
+                var s2 = document.getElementById('stage2ndStatus');
+                if (s2) { s2.textContent = '⏸ 미완료'; s2.style.color = '#9ca3af'; }
+            }
+            if (!saved.errorNoteSubmitted) {
+                var ns = document.getElementById('stageErrorNoteStatus');
+                if (ns) { ns.textContent = '⏸ 미제출'; ns.style.color = '#9ca3af'; }
+            }
+        } else {
+            var forceCloseNotice = document.getElementById('stageForceCloseNotice');
+            if (forceCloseNotice) forceCloseNotice.style.display = 'none';
+        }
+
+        // 다시 풀기 버튼
+        var retryBtn = document.getElementById('stageRetryBtn');
+        if (showRetryButton) {
+            if (!retryBtn) {
+                retryBtn = document.createElement('button');
+                retryBtn.id = 'stageRetryBtn';
+                retryBtn.className = 'btn btn-retry';
+                retryBtn.style.cssText = 'width:100%; padding:14px; margin-top:12px; background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; border:none; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:all 0.2s;';
+                retryBtn.innerHTML = '🔄 다시 풀어보기';
+                retryBtn.onmouseover = function() { retryBtn.style.transform = 'translateY(-1px)'; retryBtn.style.boxShadow = '0 4px 12px rgba(99,102,241,0.3)'; };
+                retryBtn.onmouseout = function() { retryBtn.style.transform = ''; retryBtn.style.boxShadow = ''; };
+                retryBtn.onclick = function() { _startRetryAttempt(); };
+                
+                var stageScreen = document.getElementById('stageSelectScreen');
+                var btnArea = stageScreen ? stageScreen.querySelector('.stage-buttons') : null;
+                if (btnArea) btnArea.parentNode.insertBefore(retryBtn, btnArea.nextSibling);
+            }
+            retryBtn.style.display = 'flex';
+        } else {
+            if (retryBtn) retryBtn.style.display = 'none';
+        }
+
+        // 이전 시도 이력 표시
+        if (saved.firstHistoryJson && saved.firstHistoryJson.length > 0) {
+            _renderRetryHistory(saved.firstHistoryJson);
+        } else {
+            var historyContainer = document.getElementById('retryHistoryContainer');
+            if (historyContainer) historyContainer.style.display = 'none';
+        }
     }
 };
+
+/**
+ * ★ 다시 풀기 시작
+ * 기존 startFirstAttemptV2()와 동일한 흐름이지만,
+ * 완료 후 안내 문구가 "연습 풀이가 완료되었습니다."로 다름
+ */
+function _startRetryAttempt() {
+    console.log('🔄 [V2] 다시 풀기 시작');
+    
+    // 다시 풀기 플래그 설정 (안내 문구 분기용)
+    StageSelector._isRetryMode = true;
+    
+    // 안내 팝업
+    if (typeof showGuidePopup === 'function') {
+        showGuidePopup({
+            icon: '🔄',
+            title: '다시 풀어보기',
+            desc: '연습 모드로 진행됩니다.<br>인증률과 레벨에는 영향이 없습니다.',
+            notice: '',
+            btn: '시작하기',
+            theme: 'theme-purple'
+        }).then(function() {
+            startFirstAttemptV2();
+        });
+    } else {
+        startFirstAttemptV2();
+    }
+}
+
+/**
+ * ★ 이전 시도 이력 표시
+ */
+function _renderRetryHistory(historyArray) {
+    var container = document.getElementById('retryHistoryContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'retryHistoryContainer';
+        container.style.cssText = 'margin-top:16px; padding:12px 16px; background:var(--bg-secondary, #f8fafc); border-radius:12px; border:1px solid var(--border-color, #e2e8f0);';
+        
+        var stageScreen = document.getElementById('stageSelectScreen');
+        if (stageScreen) stageScreen.appendChild(container);
+    }
+    
+    var sectionType = StageSelector.sectionType;
+    var html = '<div style="font-size:13px; font-weight:600; color:var(--text-secondary, #64748b); margin-bottom:8px;">── 이전 시도 ──</div>';
+    
+    historyArray.forEach(function(entry, index) {
+        var dateStr = '';
+        if (entry.date) {
+            var d = new Date(entry.date);
+            dateStr = (d.getMonth() + 1) + '/' + d.getDate();
+        }
+        
+        var resultInfo = '';
+        if (entry.result) {
+            var r = entry.result;
+            
+            // 섹션별 이력 표시
+            if (sectionType === 'writing') {
+                // 라이팅: 제출 완료 (단어배열 x/10)
+                var arrangeScore = '';
+                if (r.writingResult && r.writingResult.arrange1st) {
+                    var a = r.writingResult.arrange1st;
+                    arrangeScore = ' (단어배열 ' + (a.correct || 0) + '/' + (a.total || 10) + ')';
+                }
+                resultInfo = '제출 완료' + arrangeScore;
+            } else if (sectionType === 'speaking') {
+                // 스피킹: 제출 완료
+                resultInfo = '제출 완료';
+            } else {
+                // 리딩/리스닝: 레벨 재계산
+                var tc = r.totalCorrect || 0;
+                var tq = r.totalQuestions || 0;
+                var level = (typeof StudySave !== 'undefined' && StudySave.calculateLevel) 
+                    ? StudySave.calculateLevel(sectionType, tc) 
+                    : null;
+                resultInfo = (level ? 'Level ' + level.toFixed(1) + ' ' : '') + '(' + tc + '/' + tq + ')';
+            }
+        }
+        
+        html += '<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; font-size:13px; border-bottom:1px solid var(--border-color, #e2e8f0);">';
+        html += '<span style="color:var(--text-secondary, #64748b);">' + (index + 1) + '회차 (' + dateStr + ')</span>';
+        html += '<span style="font-weight:500; color:var(--text-primary, #1e293b);">' + resultInfo + '</span>';
+        html += '</div>';
+    });
+    
+    container.innerHTML = html;
+    container.style.display = 'block';
+}
 
 /**
  * 과제 화면으로 복귀하는 공통 함수
@@ -233,7 +407,10 @@ async function startFirstAttemptV2() {
             
             // ★ 라이팅 1차 완료 안내 팝업
             if (typeof showGuidePopup === 'function') {
-                showGuidePopup({ icon: '✅', title: '1차 풀이가 완료되었습니다', desc: '2차 풀이도 진행해주세요.', notice: '', btn: '확인', theme: 'theme-green' });
+                showGuidePopup(StageSelector._isRetryMode 
+                    ? { icon: '✅', title: '연습 풀이가 완료되었습니다', desc: '이전 시도 이력에서 결과를 확인할 수 있습니다.', notice: '', btn: '확인', theme: 'theme-purple' }
+                    : { icon: '✅', title: '1차 풀이가 완료되었습니다', desc: '2차 풀이도 진행해주세요.', notice: '', btn: '확인', theme: 'theme-green' });
+                StageSelector._isRetryMode = false;
             }
         });
         return;
@@ -284,7 +461,10 @@ async function startFirstAttemptV2() {
                     backBtn.onclick = async function() {
                         // ★ 리딩/리스닝 1차 완료 안내 팝업
                         if (typeof showGuidePopup === 'function') {
-                            await showGuidePopup({ icon: '✅', title: '1차 풀이가 완료되었습니다', desc: '2차 풀이도 진행해주세요.', notice: '', btn: '과제 화면으로', theme: 'theme-green' });
+                            await showGuidePopup(StageSelector._isRetryMode 
+                            ? { icon: '✅', title: '연습 풀이가 완료되었습니다', desc: '이전 시도 이력에서 결과를 확인할 수 있습니다.', notice: '', btn: '과제 화면으로', theme: 'theme-purple' }
+                            : { icon: '✅', title: '1차 풀이가 완료되었습니다', desc: '2차 풀이도 진행해주세요.', notice: '', btn: '과제 화면으로', theme: 'theme-green' });
+                        StageSelector._isRetryMode = false;
                         }
                         returnToStageSelect(result);
                     };
@@ -1047,16 +1227,28 @@ async function _startSpeakingAttempt(attemptNum, moduleNumber, moduleConfig) {
         
         // ★ 완료 안내 팝업
         if (typeof showGuidePopup === 'function') {
-            await showGuidePopup({
-                icon: '✅',
-                title: attemptNum + '차 답변이 완료되었습니다',
-                desc: attemptNum === 1
-                    ? '2차 답변도 진행해주세요.'
-                    : '오답노트까지 제출하면 <b>100% 인증</b>됩니다.',
-                notice: '',
-                btn: '과제 화면으로',
-                theme: 'theme-green'
-            });
+            if (attemptNum === 1 && StageSelector._isRetryMode) {
+                await showGuidePopup({
+                    icon: '✅',
+                    title: '연습 풀이가 완료되었습니다',
+                    desc: '이전 시도 이력에서 결과를 확인할 수 있습니다.',
+                    notice: '',
+                    btn: '과제 화면으로',
+                    theme: 'theme-purple'
+                });
+                StageSelector._isRetryMode = false;
+            } else {
+                await showGuidePopup({
+                    icon: '✅',
+                    title: attemptNum + '차 답변이 완료되었습니다',
+                    desc: attemptNum === 1
+                        ? '2차 답변도 진행해주세요.'
+                        : '오답노트까지 제출하면 <b>100% 인증</b>됩니다.',
+                    notice: '',
+                    btn: '과제 화면으로',
+                    theme: 'theme-green'
+                });
+            }
         }
         
         if (attemptNum === 1) {
