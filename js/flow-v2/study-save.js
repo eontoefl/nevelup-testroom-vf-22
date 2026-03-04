@@ -75,6 +75,35 @@ const StudySave = (function() {
             });
         }
         
+        // 레벨 계산 (1.0 ~ 6.0)
+        const sectionType = key.section_type;
+        let firstLevel = null;
+        if (sectionType === 'reading') {
+            if (totalCorrect <= 3) firstLevel = 1.0;
+            else if (totalCorrect <= 6) firstLevel = 1.5;
+            else if (totalCorrect <= 10) firstLevel = 2.0;
+            else if (totalCorrect <= 13) firstLevel = 2.5;
+            else if (totalCorrect <= 17) firstLevel = 3.0;
+            else if (totalCorrect <= 20) firstLevel = 3.5;
+            else if (totalCorrect <= 24) firstLevel = 4.0;
+            else if (totalCorrect <= 27) firstLevel = 4.5;
+            else if (totalCorrect <= 30) firstLevel = 5.0;
+            else if (totalCorrect <= 32) firstLevel = 5.5;
+            else firstLevel = 6.0;
+        } else if (sectionType === 'listening') {
+            if (totalCorrect <= 2) firstLevel = 1.0;
+            else if (totalCorrect <= 5) firstLevel = 1.5;
+            else if (totalCorrect <= 8) firstLevel = 2.0;
+            else if (totalCorrect <= 11) firstLevel = 2.5;
+            else if (totalCorrect <= 15) firstLevel = 3.0;
+            else if (totalCorrect <= 18) firstLevel = 3.5;
+            else if (totalCorrect <= 21) firstLevel = 4.0;
+            else if (totalCorrect <= 24) firstLevel = 4.5;
+            else if (totalCorrect <= 27) firstLevel = 5.0;
+            else if (totalCorrect <= 29) firstLevel = 5.5;
+            else firstLevel = 6.0;
+        }
+        
         // 기존 레코드 확인
         const existing = await _findExisting(key);
         
@@ -86,6 +115,7 @@ const StudySave = (function() {
                 totalQuestions: moduleResult.totalQuestions,
                 percentage: Math.round((totalCorrect / moduleResult.totalQuestions) * 100)
             }),
+            first_level: firstLevel,
             completed_at: new Date().toISOString()
         };
         
