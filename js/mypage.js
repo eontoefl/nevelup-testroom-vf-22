@@ -67,7 +67,7 @@ async function loadAllData() {
     // V2 학습 결과 로드 (result_json은 대용량이므로 제외)
     mpV2Results = await supabaseSelect(
         'study_results_v2',
-        `user_id=eq.${userId}&order=completed_at.desc&select=id,user_id,section_type,module_number,week,day,first_result_json,second_result_json,error_note_submitted,completed_at`
+        `user_id=eq.${userId}&order=completed_at.desc&select=id,user_id,section_type,module_number,week,day,first_result_json,second_result_json,error_note_submitted,first_level,completed_at`
     ) || [];
 
     // 등급/환급 기준표 로드
@@ -698,81 +698,38 @@ function getCurrentScheduleDay() {
 }
 
 // ================================================
-// ③ 점수 추이 차트
+// ③ 성적 추이 라인 차트 (first_level 기반)
 // ================================================
 let scoreChartInstance = null;  // Chart.js 인스턴스
 let currentScoreTab = 'reading'; // 현재 활성 탭
 
 /**
- * result_json → 정답률(0~100) 변환
- * answers 배열의 isCorrect를 세서 계산
- * 문자열/객체 모두 허용, null 안전
- */
-function parseScore(resultJson) {
-    if (!resultJson) return null;
-    // 문자열이면 파싱
-    let obj = resultJson;
-    if (typeof obj === 'string') {
-        try { obj = JSON.parse(obj); } catch(e) { return null; }
-    }
-    // 방법1: answers 배열에서 isCorrect 카운트
-    if (Array.isArray(obj.answers) && obj.answers.length > 0) {
-        const total = obj.answers.length;
-        const correct = obj.answers.filter(a => a.isCorrect === true).length;
-        return Math.round((correct / total) * 100);
-    }
-    // 방법2: score 문자열("3/5") 폴백
-    if (obj.score) {
-        const parts = String(obj.score).split('/');
-        if (parts.length === 2) {
-            const got = parseFloat(parts[0]);
-            const total = parseFloat(parts[1]);
-            if (!isNaN(got) && !isNaN(total) && total > 0) {
-                return Math.round((got / total) * 100);
-            }
-        }
-    }
-    return null;
-}
-
-/**
  * 특정 section_type의 차트 데이터 생성
- * → 시간순 정렬, 라벨 + 1차/2차 점수 배열 반환
+ * → 모듈 번호 순 정렬, 라벨 + first_level 배열 반환
  */
 function buildChartData(sectionType) {
     const filtered = mpV2Results
-        .filter(r => r.section_type === sectionType)
+        .filter(r => r.section_type === sectionType && r.first_level != null)
         .sort((a, b) => {
-            // week → module_number 순 정렬 (숫자 추출)
             const wA = extractNum(a.week) * 100 + (a.module_number || 0);
             const wB = extractNum(b.week) * 100 + (b.module_number || 0);
             return wA - wB;
         });
 
     const labels = [];
-    const firstScores = [];
-    const secondScores = [];
+    const levels = [];
 
     filtered.forEach(r => {
-        const w = extractNum(r.week);
         const m = r.module_number || '?';
-        const label = `W${w} M${m}`;
-        const first = parseScore(r.first_result_json);
-        const second = parseScore(r.second_result_json);
-
-        // 1차 점수도 없으면 스킵
-        if (first === null) return;
-
-        labels.push(label);
-        firstScores.push(first);
-        secondScores.push(second); // null 가능 (2차 미응시)
+        labels.push('M' + m);
+        levels.push(r.first_level);
     });
 
-    return { labels, firstScores, secondScores };
+    return { labels, levels };
 }
 
 /**
- * Chart.js로 grouped bar chart 렌더링
+ * Chart.js로 라인 차트 렌더링
  */
 function renderScoreChart() {
     const canvas = document.getElementById('scoreChart');
@@ -796,47 +753,30 @@ function renderScoreChart() {
     canvas.style.display = '';
     if (emptyEl) emptyEl.style.display = 'none';
 
-    // 2차 시도 데이터가 하나라도 있는지 확인
-    const hasSecond = data.secondScores.some(s => s !== null);
-
-    const datasets = [
-        {
-            label: '1차 시도',
-            data: data.firstScores,
-            backgroundColor: 'rgba(148, 128, 197, 0.75)',
-            borderColor: 'rgba(148, 128, 197, 1)',
-            borderWidth: 1,
-            borderRadius: 4,
-            barPercentage: hasSecond ? 0.7 : 0.5,
-            categoryPercentage: hasSecond ? 0.6 : 0.4
-        }
-    ];
-
-    if (hasSecond) {
-        datasets.push({
-            label: '2차 시도',
-            data: data.secondScores.map(s => s === null ? 0 : s),
-            backgroundColor: data.secondScores.map(s => 
-                s === null ? 'transparent' : 'rgba(119, 191, 126, 0.75)'
-            ),
-            borderColor: data.secondScores.map(s => 
-                s === null ? 'transparent' : 'rgba(119, 191, 126, 1)'
-            ),
-            borderWidth: 1,
-            borderRadius: 4,
-            barPercentage: 0.7,
-            categoryPercentage: 0.6
-        });
-    }
-
     // 기존 차트 제거 후 새로 생성
     if (scoreChartInstance) { scoreChartInstance.destroy(); }
 
     scoreChartInstance = new Chart(canvas, {
-        type: 'bar',
+        type: 'line',
         data: {
             labels: data.labels,
-            datasets: datasets
+            datasets: [{
+                label: 'Level',
+                data: data.levels,
+                borderColor: '#9480c5',
+                backgroundColor: 'rgba(148, 128, 197, 0.08)',
+                borderWidth: 2.5,
+                pointBackgroundColor: '#fff',
+                pointBorderColor: '#9480c5',
+                pointBorderWidth: 2.5,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                pointHoverBackgroundColor: '#9480c5',
+                pointHoverBorderColor: '#fff',
+                pointHoverBorderWidth: 2,
+                tension: 0.3,
+                fill: true
+            }]
         },
         options: {
             responsive: true,
@@ -844,41 +784,51 @@ function renderScoreChart() {
             plugins: {
                 legend: { display: false },
                 tooltip: {
+                    backgroundColor: '#1e1b2e',
+                    titleFont: { size: 13, weight: '600' },
+                    bodyFont: { size: 14, weight: '700' },
+                    padding: 12,
+                    cornerRadius: 10,
+                    displayColors: false,
                     callbacks: {
-                        label: function(ctx) {
-                            if (ctx.raw === 0 && data.secondScores[ctx.dataIndex] === null) {
-                                return '2차: 미응시';
-                            }
-                            return `${ctx.dataset.label}: ${ctx.raw}%`;
-                        }
+                        title: function(ctx) { return 'Module ' + ctx[0].label.replace('M',''); },
+                        label: function(ctx) { return 'Level ' + ctx.raw.toFixed(1); }
                     }
                 }
             },
             scales: {
                 y: {
-                    beginAtZero: true,
-                    max: 100,
+                    min: 1.0,
+                    max: 6.0,
                     ticks: {
-                        callback: v => v + '%',
-                        font: { size: 11 },
+                        stepSize: 0.5,
+                        callback: function(v) { return v.toFixed(1); },
+                        font: { size: 12, weight: '500' },
                         color: '#99aabb'
                     },
-                    grid: { color: 'rgba(0,0,0,0.05)' }
+                    grid: {
+                        color: 'rgba(0,0,0,0.04)',
+                        drawBorder: false
+                    },
+                    border: { display: false }
                 },
                 x: {
                     ticks: {
-                        font: { size: 11 },
-                        color: '#5c6878',
-                        maxRotation: 45,
-                        minRotation: 0
+                        font: { size: 12, weight: '600' },
+                        color: '#5c6878'
                     },
-                    grid: { display: false }
+                    grid: { display: false },
+                    border: { display: false }
                 }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
             }
         }
     });
 
-    console.log(`📊 [MyPage] 점수 차트 렌더링 완료 - ${currentScoreTab}, ${data.labels.length}건`);
+    console.log(`📊 [MyPage] 성적 추이 차트 렌더링 완료 - ${currentScoreTab}, ${data.labels.length}건`);
 }
 
 /**
@@ -891,11 +841,8 @@ function setupScoreTabEvents() {
 
     document.querySelectorAll('.score-tab').forEach(tab => {
         tab.addEventListener('click', () => {
-            // 활성 탭 변경
             document.querySelectorAll('.score-tab').forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
-
-            // 차트 데이터 교체
             currentScoreTab = tab.getAttribute('data-tab');
             renderScoreChart();
         });
