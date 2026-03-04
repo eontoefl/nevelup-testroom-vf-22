@@ -68,7 +68,7 @@ class ConverComponent {
     
     // 나레이션 URL (고정)
     this.NARRATION_URL = 'https://eontoefl.github.io/toefl-audio/listening/conversation/narration/conversation_narration.mp3';
-    
+  }
 
 
   /**
