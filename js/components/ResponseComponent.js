@@ -83,7 +83,7 @@ class ResponseComponent {
       'https://eontoefl.github.io/toefl-audio/listening/response/image/response_imageM4.jpg',
       'https://eontoefl.github.io/toefl-audio/listening/response/image/response_imageM5.jpg'
     ];
-    
+  }
 
 
   /**
