@@ -32,6 +32,7 @@
 <link rel="stylesheet" href="css/writing-email-result.css?v=015">
 <link rel="stylesheet" href="css/writing-discussion-result.css?v=003">
     <link rel="stylesheet" href="css/discussion-style-v2.css?v=015">
+    <link rel="stylesheet" href="css/notification.css?v=001">
     <link rel="stylesheet" href="css/speaking-repeat-style.css?v=20250207-fixed">
     <link rel="stylesheet" href="css/speaking-repeat-result.css?v=001">
     <link rel="stylesheet" href="css/speaking-interview-style.css?v=005">
@@ -329,15 +330,47 @@
                     <span class="program-badge" id="userProgramBadge"></span>
                 </div>
             </div>
-            <div style="display: flex; gap: 10px;">
-                <button class="mypage-btn" onclick="window.location.href='mypage.html'">
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <!-- 🔔 알림 버튼 -->
+                <div class="notif-wrapper" id="notifWrapper">
+                    <button class="nav-icon-btn notif-bell-btn" id="notifBellBtn" onclick="toggleNotifDropdown()" title="알림">
+                        <i class="fas fa-bell"></i>
+                        <span class="notif-badge" id="notifBadge" style="display:none;"></span>
+                    </button>
+                    
+                    <!-- 드롭다운 리스트 (JS에서 동적 렌더링) -->
+                    <div class="notif-dropdown" id="notifDropdown">
+                        <div class="notif-dropdown-header">
+                            <span>📬 알림</span>
+                            <span class="notif-dropdown-count" id="notifDropdownCount"></span>
+                        </div>
+                        <div class="notif-dropdown-list" id="notifDropdownList">
+                            <!-- notification.js에서 동적으로 채워집니다 -->
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="nav-icon-btn" onclick="window.location.href='mypage.html'" title="마이페이지">
                     <i class="fas fa-chart-line"></i>
-                    마이페이지
                 </button>
-                <button class="logout-btn" onclick="logout()">
+                <button class="nav-icon-btn nav-icon-logout" onclick="logout()" title="로그아웃">
                     <i class="fas fa-sign-out-alt"></i>
-                    로그아웃
                 </button>
+            </div>
+        </div>
+        
+        <!-- 🔔 알림 상세 팝업 오버레이 (JS에서 내용 채움) -->
+        <div class="notif-popup-overlay" id="notifPopupOverlay" onclick="closeNotifDetail()">
+            <div class="notif-popup" onclick="event.stopPropagation()">
+                <div class="notif-popup-header">
+                    <div class="notif-popup-title" id="notifPopupTitle"></div>
+                    <button class="notif-popup-close" onclick="closeNotifDetail()">✕</button>
+                </div>
+                <div class="notif-popup-meta" id="notifPopupMeta"></div>
+                <div class="notif-popup-body" id="notifPopupBody"></div>
+                <div class="notif-popup-footer">
+                    <button class="notif-popup-confirm" onclick="closeNotifDetail()">확인</button>
+                </div>
             </div>
         </div>
         
@@ -438,6 +471,8 @@
 
         // 공지사항은 showScreen('scheduleScreen') 시 main.js에서 호출됨
         </script>
+        
+        <!-- 🔔 알림 JS는 notification.js에서 로드됨 -->
 
         <div class="container" style="position: relative;">
             <div class="schedule-header">
@@ -3408,6 +3443,8 @@
     <script src="js/navigation.js?v=003_popup_rules"></script>
     <script src="js/supabase-client.js?v=003_upsert_fix"></script>
 <script src="js/auth.js?v=1002"></script>
+    <!-- 🔔 알림 시스템 -->
+    <script src="js/notification.js?v=001"></script>
     <!-- [V2] 학습 결과 Supabase 저장 모듈 -->
     <script src="js/flow-v2/study-save.js?v=001"></script>
     
