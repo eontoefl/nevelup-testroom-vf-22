@@ -560,7 +560,8 @@ var ProgressTracker = {
 };
 
 // ========================================
-// 자동 연동: showTaskListScreen에 체크 표시 + AuthMonitor 캐시 갱신
+// 자동 연동: showTaskListScreen에 체크 표시
+// ★ AuthMonitor 연동 제거됨 (V2에서 auth-monitor.js 미사용)
 // ========================================
 (function() {
     var setupDone = false;
@@ -579,22 +580,6 @@ var ProgressTracker = {
                 }, 100);
             };
             console.log('📊 [ProgressTracker] showTaskListScreen 연동 완료');
-        }
-
-        // AuthMonitor.saveFinalRecords 후 캐시 갱신 연동
-        if (window.AuthMonitor) {
-            var originalSaveFinal = AuthMonitor.saveFinalRecords.bind(AuthMonitor);
-            AuthMonitor.saveFinalRecords = async function() {
-                await originalSaveFinal();
-                // 저장 후 캐시 갱신
-                var snap = AuthMonitor._snapshot || {};
-                var sType = AuthMonitor._lastSectionType || snap.sectionType;
-                var mNum = AuthMonitor._lastModuleNumber || snap.moduleNumber;
-                if (sType && mNum) {
-                    ProgressTracker.markCompleted(sType, mNum);
-                }
-            };
-            console.log('📊 [ProgressTracker] AuthMonitor 연동 완료');
         }
 
         setupDone = true;

@@ -67,7 +67,7 @@ async function loadAllData() {
     // V2 학습 결과 로드 (result_json은 대용량이므로 제외)
     mpV2Results = await supabaseSelect(
         'study_results_v2',
-        `user_id=eq.${userId}&order=completed_at.desc&select=id,user_id,section_type,module_number,week,day,first_result_json,second_result_json,error_note_submitted,first_level,completed_at`
+        `user_id=eq.${userId}&order=completed_at.desc&select=id,user_id,section_type,module_number,week,day,first_result_json,second_result_json,error_note_submitted,first_level,locked_auth_rate,completed_at`
     ) || [];
 
     // 등급/환급 기준표 로드
@@ -347,6 +347,7 @@ function renderSummaryCards() {
     const tasksDueToday = taskStats.due;
 
     // ── 인증률 계산 (V2: 각 과제별 인증률 합산 / 오늘까지 할당 과제 수) ──
+    // ★ 다시 풀기 시스템: locked_auth_rate 우선 사용
     let authRateSum = 0;
     
     // study_results_v2에서 과제별 인증률 계산
@@ -354,17 +355,15 @@ function renderSummaryCards() {
         let taskAuth = 0;
         const sectionType = r.section_type;
         
-        // 스피킹: 30 + 30 + 40
-        if (sectionType === 'speaking') {
-            if (r.first_result_json) taskAuth += 30;
-            if (r.second_result_json) taskAuth += 30;
-            if (r.error_note_submitted) taskAuth += 40;
+        // ★ 확정된 인증률이 있으면 그 값을 그대로 사용
+        if (r.locked_auth_rate != null) {
+            taskAuth = Number(r.locked_auth_rate);
         }
-        // 보카/입문서: 있으면 100
+        // 보카/입문서: 있으면 100 (다시 풀기 대상 아님, locked_auth_rate 없음)
         else if (sectionType === 'vocab' || sectionType === 'intro-book') {
             if (r.first_result_json) taskAuth = 100;
         }
-        // 리딩/리스닝/라이팅: 33 + 33 + 34
+        // 리딩/리스닝/라이팅/스피킹: 모두 33 + 33 + 34 = 100 (통일)
         else {
             if (r.first_result_json) taskAuth += 33;
             if (r.second_result_json) taskAuth += 33;
