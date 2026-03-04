@@ -186,7 +186,7 @@ const StageSelector = {
                 forceCloseNotice.innerHTML = '⚠️ 기한 마감으로 첫 사이클이 종료되었습니다.';
                 var stageScreen = document.getElementById('stageSelectScreen');
                 var btnArea = stageScreen ? stageScreen.querySelector('.stage-buttons') : null;
-                if (btnArea) btnArea.parentNode.insertBefore(forceCloseNotice, btnArea.nextSibling);
+                if (btnArea) btnArea.appendChild(forceCloseNotice);
             }
             forceCloseNotice.style.display = 'block';
             
@@ -219,7 +219,7 @@ const StageSelector = {
                 
                 var stageScreen = document.getElementById('stageSelectScreen');
                 var btnArea = stageScreen ? stageScreen.querySelector('.stage-buttons') : null;
-                if (btnArea) btnArea.parentNode.insertBefore(retryBtn, btnArea.nextSibling);
+                if (btnArea) btnArea.appendChild(retryBtn);
             }
             retryBtn.style.display = 'flex';
         } else {
