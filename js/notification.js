@@ -49,8 +49,8 @@
                 return;
             }
 
-            // user_id=eq.{userId} OR user_id=is.null → Supabase OR 필터
-            const query = `or=(user_id.eq.${userId},user_id.is.null)&order=created_at.desc&limit=20`;
+            // 개인 알림만 조회 (전체 공지는 tr_notices에서 별도 관리)
+            const query = `user_id=eq.${userId}&order=created_at.desc&limit=20`;
             const data = await supabaseSelect('tr_notifications', query);
 
             notifications = Array.isArray(data) ? data : [];
