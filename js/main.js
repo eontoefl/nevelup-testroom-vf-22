@@ -16,6 +16,8 @@ function showScreen(screenId) {
         // 공지사항 로드 + 너비 정렬
         if (typeof loadNotices === 'function') loadNotices();
         if (typeof alignNoticeToUserInfo === 'function') setTimeout(alignNoticeToUserInfo, 100);
+        // 🔔 알림 로드
+        if (window.NotificationSystem) NotificationSystem.load();
     }
     
     // welcomeScreen으로 전환 시 사용자 이름 표시
